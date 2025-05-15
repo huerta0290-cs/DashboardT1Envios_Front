@@ -1,6 +1,7 @@
+// src/components/dashboard/overview/QualityMetrics.tsx
 'use client';
 
-import { Box } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import CardComponent from '@/components/common/CardComponent';
 import QualityBar from '@/components/common/QualityBar';
 import { QualityMetrics as QualityMetricsType } from '@/redux/features/dashboardSlice';

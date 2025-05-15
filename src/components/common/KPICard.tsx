@@ -1,3 +1,4 @@
+// src/components/common/KPICard.tsx
 'use client';
 
 import { ReactNode } from 'react';
@@ -6,13 +7,13 @@ import {
   Card, 
   CardContent, 
   Typography, 
-  LinearProgress 
+  LinearProgress, 
+  Stack
 } from '@mui/material';
 import { 
   TrendingUp as TrendingUpIcon, 
   TrendingDown as TrendingDownIcon 
 } from '@mui/icons-material';
-import { getChangeColorClass } from '@/utils/formatters';
 
 interface KPICardProps {
   title: string;
@@ -46,16 +47,18 @@ export default function KPICard({
   const absChangeValue = changePercentage !== undefined 
     ? Math.abs(changePercentage) 
     : Math.abs(changeValue);
-  
-  // Clase de color para el indicador de cambio
-  const changeColorClass = getChangeColorClass(
-    changePercentage !== undefined ? changePercentage : changeValue
-  );
-  
+
   return (
-    <Card variant="outlined">
-      <CardContent sx={{ p: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+    <Card 
+      variant="outlined" 
+      sx={{ 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <CardContent sx={{ p: 3, flexGrow: 1 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
           <Typography variant="body2" color="text.secondary">
             {title}
           </Typography>
@@ -71,27 +74,25 @@ export default function KPICard({
           >
             {icon}
           </Box>
-        </Box>
+        </Stack>
         
-        <Typography variant="h5" fontWeight="bold" mb={0.5}>
+        <Typography variant="h5" fontWeight="bold" sx={{ mb: 0.5 }}>
           {value}
         </Typography>
         
-        <Box display="flex" alignItems="center" mb={1}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
           {isPositiveChange ? (
             <TrendingUpIcon 
               sx={{ 
                 color: 'success.main', 
-                fontSize: 16, 
-                mr: 0.5 
+                fontSize: 16
               }} 
             />
           ) : (
             <TrendingDownIcon 
               sx={{ 
                 color: 'error.main', 
-                fontSize: 16, 
-                mr: 0.5 
+                fontSize: 16
               }} 
             />
           )}
@@ -105,10 +106,10 @@ export default function KPICard({
               : `${absChangeValue.toFixed(1)} pts`}
           </Typography>
           
-          <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+          <Typography variant="caption" color="text.secondary">
             vs {previousValue}
           </Typography>
-        </Box>
+        </Stack>
         
         <LinearProgress 
           variant="determinate" 

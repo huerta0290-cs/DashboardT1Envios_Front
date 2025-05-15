@@ -1,5 +1,7 @@
+// src/components/dashboard/overview/SalesTrend.tsx
 'use client';
 
+import { useState } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -18,16 +20,62 @@ interface SalesTrendProps {
 }
 
 export default function SalesTrend({ timeRange }: SalesTrendProps) {
+  const [metricType, setMetricType] = useState('Guías');
+  
   // Datos simulados de tendencia
-  const data = [
-    { name: 'L', value: 35, amt: 2400 },
-    { name: 'M', value: 52, amt: 2210 },
-    { name: 'M', value: 46, amt: 2290 },
-    { name: 'J', value: 65, amt: 2000 },
-    { name: 'V', value: 58, amt: 2181 },
-    { name: 'S', value: 42, amt: 2500 },
-    { name: 'D', value: 38, amt: 2100 },
+  const getDailyData = () => [
+    { name: '00:00', value: 10 },
+    { name: '04:00', value: 5 },
+    { name: '08:00', value: 15 },
+    { name: '12:00', value: 35 },
+    { name: '16:00', value: 42 },
+    { name: '20:00', value: 25 },
+    { name: '23:59', value: 15 },
   ];
+  
+  const getWeeklyData = () => [
+    { name: 'Lun', value: 35 },
+    { name: 'Mar', value: 52 },
+    { name: 'Mié', value: 46 },
+    { name: 'Jue', value: 65 },
+    { name: 'Vie', value: 58 },
+    { name: 'Sáb', value: 42 },
+    { name: 'Dom', value: 38 },
+  ];
+  
+  const getMonthlyData = () => [
+    { name: 'Sem 1', value: 190 },
+    { name: 'Sem 2', value: 210 },
+    { name: 'Sem 3', value: 195 },
+    { name: 'Sem 4', value: 240 },
+  ];
+  
+  const getCustomData = () => [
+    { name: 'Inicio', value: 45 },
+    { name: '', value: 52 },
+    { name: '', value: 58 },
+    { name: '', value: 62 },
+    { name: '', value: 70 },
+    { name: 'Fin', value: 65 },
+  ];
+  
+  // Seleccionar datos según el rango de tiempo
+  const getData = () => {
+    switch (timeRange) {
+      case '1d':
+        return getDailyData();
+      case '7d':
+        return getWeeklyData();
+      case '30d':
+        return getMonthlyData();
+      case 'custom':
+        return getCustomData();
+      default:
+        return getWeeklyData();
+    }
+  };
+  
+  const data = getData();
   
   // Título basado en el rango de tiempo
   const getTimeRangeTitle = () => {
@@ -45,13 +93,32 @@ export default function SalesTrend({ timeRange }: SalesTrendProps) {
     }
   };
 
+  // Factor de multiplicación para simular diferentes métricas
+  const getScaleFactor = () => {
+    if (metricType === 'Ingresos') return 500; // Simular ingresos
+    if (metricType === 'Margen') return 0.35; // Simular margen porcentual
+    return 1; // Factor para guías
+  };
+  
+  // Formatear valores para el tooltip según el tipo de métrica
+  const formatTooltipValue = (value: number) => {
+    if (metricType === 'Ingresos') return `$${formatNumber(value * getScaleFactor())}`;
+    if (metricType === 'Margen') return `${(value * getScaleFactor()).toFixed(1)}%`;
+    return formatNumber(value);
+  };
+
+  const handleMetricChange = (value: string) => {
+    setMetricType(value);
+  };
+
   return (
     <CardComponent 
-      title={`Tendencia de Ventas (${getTimeRangeTitle()})`}
+      title={`Tendencia de ${metricType} (${getTimeRangeTitle()})`}
       actions={
         <DropdownFilter 
           options={['Guías', 'Ingresos', 'Margen']} 
-          defaultValue="Guías" 
+          defaultValue="Guías"
+          onChange={handleMetricChange}
         />
       }
       height={350}
@@ -78,10 +145,14 @@ export default function SalesTrend({ timeRange }: SalesTrendProps) {
             tick={{ fontSize: 12 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(value) => formatNumber(value)}
+            tickFormatter={(value) => {
+              if (metricType === 'Ingresos') return `$${value * getScaleFactor() / 1000}k`;
+              if (metricType === 'Margen') return `${(value * getScaleFactor()).toFixed(0)}%`;
+              return value.toString();
+            }}
           />
           <Tooltip 
-            formatter={(value: number) => formatNumber(value)} 
+            formatter={(value: number) => formatTooltipValue(value)} 
             contentStyle={{
               backgroundColor: '#fff',
               border: '1px solid #f0f0f0',

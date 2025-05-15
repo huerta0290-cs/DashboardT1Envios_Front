@@ -13,62 +13,98 @@ import {
   Tooltip, 
   Divider, 
   Switch, 
-  FormControlLabel,
-  Stack,
+  FormControlLabel, 
+  ButtonGroup,
   Menu,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Stack
 } from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale/es';
 import { 
   Notifications as NotificationsIcon, 
   Settings as SettingsIcon, 
   KeyboardArrowDown as KeyboardArrowDownIcon,
-  CalendarMonth as CalendarMonthIcon,
-  Refresh as RefreshIcon
+  CalendarMonth as CalendarMonthIcon
 } from '@mui/icons-material';
-import { useDashboard } from '@/utils/dashboard-hooks';
-import DateRangePicker from '@/components/common/DateRangePicker';
-import { format } from 'date-fns';
-import { es as esLocale } from 'date-fns/locale';
+
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { 
+  setTimeRange, 
+  setComparisonEnabled, 
+  setCustomDateRange 
+} from '@/redux/features/dashboardSlice';
 
 export default function Header() {
-  const { 
-    timeRange, 
-    updateTimeRange, 
-    comparisonEnabled, 
-    toggleComparison,
-    refreshDashboard,
-    customDateRange,
-    setDateRange
-  } = useDashboard();
-  
-  // Estado para el diálogo de rango de fechas
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const dispatch = useAppDispatch();
+  const { timeRange, comparisonEnabled, customDateRange } = useAppSelector(state => state.dashboard);
   
   // Estado para menú de usuario
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   
+  // Estado para diálogo de fecha personalizada
+  const [dateDialogOpen, setDateDialogOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(
+    customDateRange.startDate ? new Date(customDateRange.startDate) : null
+  );
+  const [endDate, setEndDate] = useState<Date | null>(
+    customDateRange.endDate ? new Date(customDateRange.endDate) : null
+  );
+  
+  // Manejadores de eventos
   const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
   
-  const handleClose = () => {
+  const handleUserMenuClose = () => {
     setAnchorEl(null);
   };
 
-  // Texto para mostrar cuando se selecciona un rango personalizado
-  const getCustomRangeText = () => {
-    if (customDateRange.fromDate && customDateRange.toDate) {
-      const fromDate = new Date(customDateRange.fromDate);
-      const toDate = new Date(customDateRange.toDate);
-      return `${format(fromDate, 'dd MMM', { locale: esLocale })} - ${format(toDate, 'dd MMM', { locale: esLocale })}`;
+  const handleTimeRangeChange = (newRange: '1d' | '7d' | '30d' | 'custom') => {
+    if (newRange === 'custom') {
+      setDateDialogOpen(true);
+    } else {
+      dispatch(setTimeRange(newRange));
     }
-    return "Personalizado";
+  };
+
+  const handleComparisonToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setComparisonEnabled(event.target.checked));
+  };
+
+  const handleDateDialogClose = () => {
+    setDateDialogOpen(false);
+  };
+
+  const handleDateDialogConfirm = () => {
+    if (startDate && endDate) {
+      // Formatear las fechas en formato ISO
+      const formattedStartDate = format(startDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+      const formattedEndDate = format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+      
+      // Actualizar el state de Redux
+      dispatch(setCustomDateRange({
+        startDate: formattedStartDate,
+        endDate: formattedEndDate
+      }));
+      
+      // Establecer el rango de tiempo como personalizado
+      dispatch(setTimeRange('custom'));
+    }
+    setDateDialogOpen(false);
   };
 
   return (
     <>
-      <AppBar position="sticky" elevation={0}>
+      <AppBar position="sticky" elevation={0} color="default">
         <Toolbar sx={{ px: 3 }}>
           <Box display="flex" alignItems="center">
             <Typography variant="h6" color="primary" fontWeight="bold" sx={{ mr: 0.5 }}>
@@ -85,81 +121,70 @@ export default function Header() {
           
           <Box sx={{ flexGrow: 1 }} />
           
-          <Stack direction="row" spacing={2} alignItems="center">
-            {/* Botón de actualizar */}
-            <Tooltip title="Actualizar datos">
-              <IconButton 
-                size="small" 
-                onClick={refreshDashboard}
-                sx={{ bgcolor: 'grey.100' }}
-              >
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            
+          <Stack direction="row" spacing={3} alignItems="center">
             {/* Selector de rango de tiempo */}
-            <Stack 
-              direction="row" 
-              spacing={1} 
+            <ButtonGroup 
+              variant="outlined" 
+              size="small" 
               sx={{ 
-                bgcolor: 'grey.100', 
+                backgroundColor: 'grey.100', 
                 borderRadius: 2,
-                p: 0.5
+                '& .MuiButtonGroup-grouped': {
+                  borderColor: 'transparent',
+                  minWidth: '60px'
+                }
               }}
             >
               <Button 
-                onClick={() => updateTimeRange('1d')}
-                variant={timeRange === '1d' ? 'contained' : 'text'}
+                onClick={() => handleTimeRangeChange('1d')}
+                variant={timeRange === '1d' ? 'contained' : 'outlined'}
                 color={timeRange === '1d' ? 'primary' : 'inherit'}
-                size="small"
                 sx={{ 
                   boxShadow: timeRange === '1d' ? 1 : 0, 
-                  minWidth: '60px',
-                  color: timeRange === '1d' ? 'white' : 'text.secondary',
+                  color: timeRange === '1d' ? 'primary.main' : 'text.secondary',
+                  bgcolor: timeRange === '1d' ? 'white' : 'transparent'
                 }}
               >
                 Hoy
               </Button>
               <Button 
-                onClick={() => updateTimeRange('7d')}
-                variant={timeRange === '7d' ? 'contained' : 'text'}
+                onClick={() => handleTimeRangeChange('7d')}
+                variant={timeRange === '7d' ? 'contained' : 'outlined'}
                 color={timeRange === '7d' ? 'primary' : 'inherit'}
-                size="small"
                 sx={{ 
                   boxShadow: timeRange === '7d' ? 1 : 0, 
-                  minWidth: '60px',
-                  color: timeRange === '7d' ? 'white' : 'text.secondary',
+                  color: timeRange === '7d' ? 'primary.main' : 'text.secondary',
+                  bgcolor: timeRange === '7d' ? 'white' : 'transparent'
                 }}
               >
                 7 días
               </Button>
               <Button 
-                onClick={() => updateTimeRange('30d')}
-                variant={timeRange === '30d' ? 'contained' : 'text'}
+                onClick={() => handleTimeRangeChange('30d')}
+                variant={timeRange === '30d' ? 'contained' : 'outlined'}
                 color={timeRange === '30d' ? 'primary' : 'inherit'}
-                size="small"
                 sx={{ 
                   boxShadow: timeRange === '30d' ? 1 : 0, 
-                  minWidth: '60px',
-                  color: timeRange === '30d' ? 'white' : 'text.secondary',
+                  color: timeRange === '30d' ? 'primary.main' : 'text.secondary',
+                  bgcolor: timeRange === '30d' ? 'white' : 'transparent'
                 }}
               >
                 30 días
               </Button>
               <Button 
-                onClick={() => setDatePickerOpen(true)}
-                variant={timeRange === 'custom' ? 'contained' : 'text'}
+                onClick={() => handleTimeRangeChange('custom')}
+                variant={timeRange === 'custom' ? 'contained' : 'outlined'}
                 color={timeRange === 'custom' ? 'primary' : 'inherit'}
-                size="small"
                 startIcon={<CalendarMonthIcon sx={{ fontSize: 16 }} />}
                 sx={{ 
                   boxShadow: timeRange === 'custom' ? 1 : 0, 
-                  color: timeRange === 'custom' ? 'white' : 'text.secondary',
+                  color: timeRange === 'custom' ? 'primary.main' : 'text.secondary',
+                  bgcolor: timeRange === 'custom' ? 'white' : 'transparent'
                 }}
               >
-                {timeRange === 'custom' ? getCustomRangeText() : "Personalizado"}
+                Personalizado
               </Button>
-            </Stack>
+            </ButtonGroup>
             
             {/* Switch de comparación */}
             <FormControlLabel
@@ -167,7 +192,7 @@ export default function Header() {
                 <Switch 
                   size="small"
                   checked={comparisonEnabled}
-                  onChange={(e) => toggleComparison(e.target.checked)}
+                  onChange={handleComparisonToggle}
                   color="primary"
                 />
               }
@@ -216,34 +241,73 @@ export default function Header() {
                 </Typography>
                 <KeyboardArrowDownIcon fontSize="small" sx={{ ml: 0.5 }} />
               </Box>
-              <Menu
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleClose}
-                MenuListProps={{
-                  'aria-labelledby': 'user-menu-button',
-                }}
-              >
-                <MenuItem onClick={handleClose}>Mi Perfil</MenuItem>
-                <MenuItem onClick={handleClose}>Configuración</MenuItem>
-                <MenuItem onClick={handleClose}>Cerrar Sesión</MenuItem>
-              </Menu>
             </Stack>
           </Stack>
         </Toolbar>
       </AppBar>
-
-      {/* Diálogo de selección de rango de fechas */}
-      <DateRangePicker
-        open={datePickerOpen}
-        onClose={() => setDatePickerOpen(false)}
-        onApply={(fromDate, toDate) => {
-          setDateRange(fromDate, toDate);
-          updateTimeRange('custom');
+      
+      {/* Menú de usuario */}
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleUserMenuClose}
+        MenuListProps={{
+          'aria-labelledby': 'user-menu-button',
         }}
-        initialFromDate={customDateRange.fromDate}
-        initialToDate={customDateRange.toDate}
-      />
+      >
+        <MenuItem onClick={handleUserMenuClose}>Mi Perfil</MenuItem>
+        <MenuItem onClick={handleUserMenuClose}>Configuración</MenuItem>
+        <MenuItem onClick={handleUserMenuClose}>Cerrar Sesión</MenuItem>
+      </Menu>
+      
+      {/* Diálogo para selección de fecha personalizada */}
+      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+        <Dialog 
+          open={dateDialogOpen} 
+          onClose={handleDateDialogClose}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle>Selecciona el rango de fechas</DialogTitle>
+          <DialogContent>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <DatePicker
+                label="Fecha de inicio"
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: 'outlined'
+                  }
+                }}
+              />
+              <DatePicker
+                label="Fecha de fin"
+                value={endDate}
+                onChange={(newValue) => setEndDate(newValue)}
+                minDate={startDate || undefined}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: 'outlined'
+                  }
+                }}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDateDialogClose}>Cancelar</Button>
+            <Button 
+              onClick={handleDateDialogConfirm} 
+              variant="contained" 
+              disabled={!startDate || !endDate}
+            >
+              Aplicar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </LocalizationProvider>
     </>
   );
 }

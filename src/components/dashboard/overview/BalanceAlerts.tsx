@@ -1,7 +1,8 @@
+// src/components/dashboard/overview/BalanceAlerts.tsx
 'use client';
 
-import { Box, Typography, Button, Alert } from '@mui/material';
-import { Check as CheckIcon, NotificationsActive as NotificationsIcon } from '@mui/icons-material';
+import { Box, Typography, Button, Alert, Stack } from '@mui/material';
+import { Check as CheckIcon } from '@mui/icons-material';
 import CardComponent from '@/components/common/CardComponent';
 import ViewAllButton from '@/components/common/ViewAllButton';
 import { WalletData } from '@/redux/features/dashboardSlice';
@@ -52,7 +53,7 @@ export default function BalanceAlerts({ walletData }: BalanceAlertsProps) {
                 }}
               >
                 <Box sx={{ mb: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                     <Typography variant="body2" fontWeight="medium">
                       {alert.name}
                     </Typography>
@@ -69,7 +70,7 @@ export default function BalanceAlerts({ walletData }: BalanceAlertsProps) {
                     >
                       {alert.estimatedDays} {alert.estimatedDays === 1 ? 'día' : 'días'} restantes
                     </Typography>
-                  </Box>
+                  </Stack>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                     Saldo disponible: <Typography component="span" fontWeight="medium" color="error.main">{formatCurrency(alert.availableBalance)}</Typography>
                   </Typography>
@@ -89,12 +90,11 @@ export default function BalanceAlerts({ walletData }: BalanceAlertsProps) {
           ))}
         </Box>
       ) : (
-        <Box 
+        <Stack 
+          direction="column"
+          alignItems="center" 
+          justifyContent="center"
           sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'center',
             height: '100%',
             py: 4,
           }}
@@ -109,7 +109,7 @@ export default function BalanceAlerts({ walletData }: BalanceAlertsProps) {
           <Typography color="text.secondary">
             No hay alertas de saldo bajo
           </Typography>
-        </Box>
+        </Stack>
       )}
     </CardComponent>
   );

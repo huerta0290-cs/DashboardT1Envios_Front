@@ -1,135 +1,193 @@
-// src/services/api.ts
-import axios from 'axios';
+// src/services/api.ts - Versión actualizada con mejor manejo de errores
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { getAuthToken, refreshToken } from './auth';
 
-// Configura la instancia base de axios para la API
 const API_BASE_URL = process.env.NEXT_PUBLIC_DASHBOARD_INFO || 'https://api.t1envios.com';
 
-// Función para obtener el token de autenticación
-const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
-  }
-  return null;
-};
-
-// Función para guardar el token en localStorage
-export const setAuthToken = (token: string): void => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('auth_token', token);
-  }
-};
-
-// Función para eliminar el token (logout)
-export const removeAuthToken = (): void => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
-  }
-};
-
-// Crear instancia de axios con configuración base
+// Configuración base de axios
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  // Aumentar timeout para operaciones que pueden tardar
+  timeout: 30000,
 });
 
-// Interceptor para añadir el token de autorización a todas las peticiones
+// Interceptor para añadir el token de autorización a las peticiones
 apiClient.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
-);
-
-// Interceptor para manejo de errores global
-apiClient.interceptors.response.use(
-  (response) => response,
   (error) => {
-    // Manejo centralizado de errores
-    console.error('API Error:', error);
-    
-    // Si es un error 401 (no autorizado), podríamos limpiar el token
-    if (error.response && error.response.status === 401) {
-      removeAuthToken();
-      error.isAuthError = true;
-      error.userMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
-    }
-    
-    // Si es un error 404, creamos un objeto de error más específico
-    if (error.response && error.response.status === 404) {
-      error.isNotFound = true;
-      error.userMessage = 'Recurso no encontrado: ' + (error.response.data?.message || 'La información solicitada no está disponible');
-    }
-    
-    // Asegurar que siempre haya un mensaje amigable para el usuario
-    if (!error.userMessage) {
-      error.userMessage = 
-        error.response?.data?.message || 
-        'Ocurrió un error al comunicarse con el servidor';
-    }
-    
+    console.error('Error en la configuración de la petición:', error);
     return Promise.reject(error);
   }
 );
 
-// Funciones para obtener datos del dashboard
+// Interceptor para manejar errores de autenticación y refrescar el token
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    // Asegurarse de que config existe y crear una copia que se pueda modificar
+    if (!error.config) {
+      console.error('Error sin configuración:', error);
+      return Promise.reject(error);
+    }
+    
+    const originalRequest = { ...error.config } as AxiosRequestConfig & { _retry?: boolean };
+    
+    // Si es un error 401 (No autorizado) y no hemos intentado refrescar el token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log('Recibido 401, intentando refrescar token...');
+      originalRequest._retry = true;
+      
+      try {
+        // Intentar refrescar el token
+        const newToken = await refreshToken();
+        
+        if (newToken) {
+          // Si tenemos un nuevo token, actualizamos el header y reintentamos
+          if (!originalRequest.headers) {
+            originalRequest.headers = {};
+          }
+          originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+          
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        // Si hay un error al refrescar el token, lo manejamos aquí
+        console.error('Error al refrescar el token:', refreshError);
+        
+        // Aquí podrías mostrar una notificación o disparar un evento para redirigir al login
+        console.log('Sesión expirada. Por favor, inicie sesión nuevamente.');
+      }
+    }
+    
+    // Mensaje de error mejorado para depuración
+    const errorMessage = `Error en la petición: ${error.message}`;
+    
+    if (error.response) {
+      console.error(`${errorMessage}\nStatus: ${error.response.status}\nData:`, error.response.data);
+    } else if (error.request) {
+      console.error(`${errorMessage}\nSin respuesta del servidor, request:`, error.request);
+    } else {
+      console.error(errorMessage);
+    }
+    
+    // Si no es un error 401 o no pudimos refrescar el token, propagamos el error
+    return Promise.reject(error);
+  }
+);
+
+// Función auxiliar para manejar errores en los servicios
+const handleApiError = (error: any, fallbackMessage: string) => {
+  if (axios.isAxiosError(error)) {
+    if (error.response) {
+      // El servidor respondió con un código de error
+      throw new Error(error.response.data?.message || fallbackMessage);
+    } else if (error.request) {
+      // La petición se hizo pero no se recibió respuesta
+      throw new Error('No se recibió respuesta del servidor. Verifique su conexión.');
+    } else {
+      // Error al configurar la solicitud
+      throw new Error(`Error al configurar la solicitud: ${error.message}`);
+    }
+  }
+  // Error que no es de Axios
+  throw new Error(error.message || fallbackMessage);
+};
+
+// Servicio para el dashboard con manejo de errores mejorado
 export const dashboardService = {
-  // Obtener datos generales del dashboard
-  getOverview: async (timeRange: string) => {
+  // Obtener datos del overview del dashboard
+  getOverview: async (timeRange: string, startDate?: string, endDate?: string) => {
     try {
-      const response = await apiClient.get(`/dashboard/overview?timeRange=${timeRange}`);
-      return response.data;
+      console.log(`Obteniendo overview con timeRange=${timeRange}${startDate ? `, startDate=${startDate}` : ''}${endDate ? `, endDate=${endDate}` : ''}`);
+      
+      let queryParams = `timeRange=${timeRange}`;
+      if (timeRange === 'custom' && startDate && endDate) {
+        queryParams += `&fromDate=${startDate}&toDate=${endDate}`;
+      }
+      
+      const response = await apiClient.get(`/dashboard/overview?${queryParams}`);
+      return response.data.data;
     } catch (error) {
-      throw error;
+      handleApiError(error, 'Error al obtener los datos del dashboard');
     }
   },
-
-  // Obtener datos específicos de transportistas
-  getCarriers: async (timeRange: string, carrierId?: string) => {
+  
+  // Endpoint para KPIs específicos
+  getKPIs: async (timeRange: string) => {
     try {
-      const url = carrierId 
-        ? `/carriers/${carrierId}?timeRange=${timeRange}`
-        : `/carriers?timeRange=${timeRange}`;
-      const response = await apiClient.get(url);
+      const response = await apiClient.get(`/dashboard/kpis?timeRange=${timeRange}`);
       return response.data;
     } catch (error) {
-      throw error;
+      handleApiError(error, 'Error al obtener los KPIs');
     }
   },
-
-  // Obtener datos de clientes
-  getCustomers: async (timeRange: string, params?: { limit?: number }) => {
+  
+  // Endpoint para datos de transportistas
+  getCarriers: async (timeRange: string) => {
     try {
-      const limit = params?.limit || 10;
+      const response = await apiClient.get(`/carriers?timeRange=${timeRange}`);
+      return response.data;
+    } catch (error) {
+      handleApiError(error, 'Error al obtener datos de transportistas');
+    }
+  },
+  
+  // Endpoint para transportista específico
+  getCarrierDetails: async (carrierId: number, timeRange: string) => {
+    try {
+      const response = await apiClient.get(`/carriers/${carrierId}?timeRange=${timeRange}`);
+      return response.data;
+    } catch (error) {
+      handleApiError(error, `Error al obtener detalles del transportista ${carrierId}`);
+    }
+  },
+  
+  // Endpoint para clientes top
+  getTopCustomers: async (timeRange: string, limit = 10) => {
+    try {
       const response = await apiClient.get(`/customers/top?timeRange=${timeRange}&limit=${limit}`);
       return response.data;
     } catch (error) {
-      throw error;
+      handleApiError(error, 'Error al obtener los top clientes');
     }
   },
-
-  // Obtener datos de incidencias
-  getIncidents: async (timeRange: string) => {
+  
+  // Endpoint para obtener niveles de clientes
+  getCustomerLevels: async (timeRange: string) => {
+    try {
+      const response = await apiClient.get(`/customers/levels?timeRange=${timeRange}`);
+      return response.data;
+    } catch (error) {
+      handleApiError(error, 'Error al obtener niveles de clientes');
+    }
+  },
+  
+  // Endpoint para obtener resumen de incidencias
+  getIncidentsSummary: async (timeRange: string) => {
     try {
       const response = await apiClient.get(`/incidents/summary?timeRange=${timeRange}`);
       return response.data;
     } catch (error) {
-      throw error;
+      handleApiError(error, 'Error al obtener resumen de incidencias');
     }
   },
-
-  // Obtener datos financieros
-  getFinances: async (timeRange: string) => {
+  
+  // Endpoint para obtener datos financieros
+  getFinancialSummary: async (timeRange: string) => {
     try {
       const response = await apiClient.get(`/finances/summary?timeRange=${timeRange}`);
       return response.data;
     } catch (error) {
-      throw error;
+      handleApiError(error, 'Error al obtener resumen financiero');
     }
   },
 };

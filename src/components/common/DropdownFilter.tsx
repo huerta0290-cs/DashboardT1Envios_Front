@@ -1,11 +1,12 @@
+// src/components/common/DropdownFilter.tsx
 'use client';
 
 import { useState } from 'react';
 import { 
   Button, 
   Menu, 
-  MenuItem, 
-  Box 
+  MenuItem,
+  Stack 
 } from '@mui/material';
 import { 
   FilterAlt as FilterIcon,
@@ -45,7 +46,7 @@ export default function DropdownFilter({
   };
   
   return (
-    <Box>
+    <Stack direction="row" alignItems="center">
       <Button
         id="filter-button"
         aria-controls={open ? 'filter-menu' : undefined}
@@ -87,6 +88,6 @@ export default function DropdownFilter({
           </MenuItem>
         ))}
       </Menu>
-    </Box>
+    </Stack>
   );
 }

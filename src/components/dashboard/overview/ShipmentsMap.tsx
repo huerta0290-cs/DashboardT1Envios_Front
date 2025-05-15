@@ -1,28 +1,31 @@
+// src/components/dashboard/overview/ShipmentsMap.tsx
 'use client';
 
-import { Box, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
-import { LocationOn as MapPinIcon } from '@mui/icons-material';
+import { useState } from 'react';
+import { Box, Typography, ToggleButtonGroup, ToggleButton, Stack } from '@mui/material';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CardComponent from '@/components/common/CardComponent';
 import { MapData } from '@/redux/features/dashboardSlice';
 import { formatNumber } from '@/utils/formatters';
 
+// Redux
+import { useAppDispatch, useAppSelector } from '../../../redux/hooks';
+import { setMapView } from '@/redux/features/dashboardSlice';
+
 interface ShipmentsMapProps {
   mapData: MapData[];
-  mapView: 'volume' | 'incidents';
-  setMapView: (view: 'volume' | 'incidents') => void;
 }
 
-export default function ShipmentsMap({ 
-  mapData, 
-  mapView, 
-  setMapView 
-}: ShipmentsMapProps) {
+export default function ShipmentsMap({ mapData }: ShipmentsMapProps) {
+  const dispatch = useAppDispatch();
+  const { mapView } = useAppSelector(state => state.dashboard);
+
   const handleViewChange = (
     event: React.MouseEvent<HTMLElement>,
-    newView: 'volume' | 'incidents',
+    newView: 'volume' | 'incidents' | null,
   ) => {
     if (newView !== null) {
-      setMapView(newView);
+      dispatch(setMapView(newView));
     }
   };
 
@@ -63,7 +66,7 @@ export default function ShipmentsMap({
       actions={mapActions}
       height={380}
     >
-      <Box sx={{ display: 'flex', height: '100%' }}>
+      <Stack direction="row" sx={{ height: '100%' }}>
         {/* Lado izquierdo - Mapa */}
         <Box 
           sx={{ 
@@ -79,7 +82,7 @@ export default function ShipmentsMap({
             justifyContent: 'center',
           }}
         >
-          <MapPinIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
+          <LocationOnIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
           <Typography variant="body2" color="text.secondary" align="center">
             Mapa de México con zonas de calor mostrando {mapView === 'volume' ? 'volumen de envíos' : 'incidencias'}
           </Typography>
@@ -117,7 +120,7 @@ export default function ShipmentsMap({
             ))}
           </Box>
         </Box>
-      </Box>
+      </Stack>
     </CardComponent>
   );
 }

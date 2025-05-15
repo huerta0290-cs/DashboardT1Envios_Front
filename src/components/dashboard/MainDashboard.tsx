@@ -1,34 +1,30 @@
+// src/components/dashboard/MainDashboard.tsx
 'use client';
 
-import { Box, Alert } from '@mui/material';
-import { useDashboard } from '@/utils/dashboard-hooks';
+import { Box, Typography, Stack } from '@mui/material';
+import { useAppSelector } from '../../redux/hooks';
 import OverviewTab from './tabs/OverviewTab';
-import CarriersTab from './tabs/CarriersTab';
-import CustomersTab from './tabs/CustomersTab';
-import FinancesTab from './tabs/FinancesTab';
-import IncidentsTab from './tabs/IncidentsTab';
-import ErrorState from './ErrorState';
+
+// Importa los demás componentes de pestaña cuando sean necesarios
+// import CarriersTab from './tabs/CarriersTab';
+// import CustomersTab from './tabs/CustomersTab';
+// import FinancesTab from './tabs/FinancesTab';
+// import IncidentsTab from './tabs/IncidentsTab';
 
 export default function MainDashboard() {
-  const { 
-    activeTab, 
-    data, 
-    error, 
-    refreshDashboard 
-  } = useDashboard();
+  const { activeTab, data } = useAppSelector(state => state.dashboard);
   
-  // Si hay un error y no hay datos, mostrar estado de error
-  if (error && !data) {
-    return <ErrorState 
-      message={error.message} 
-      code={error.code} 
-      onRetry={refreshDashboard} 
-    />;
-  }
-  
-  // Si no hay datos (y no estamos manejando un error), no renderizar nada
   if (!data) {
-    return null;
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h6" color="text.secondary">
+          No hay datos disponibles
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Por favor, intenta cambiar el rango de tiempo o verifica tu conexión
+        </Typography>
+      </Box>
+    );
   }
 
   // Renderizar la pestaña activa
@@ -37,13 +33,45 @@ export default function MainDashboard() {
       case 'overview':
         return <OverviewTab data={data} />;
       case 'carriers':
-        return <CarriersTab />;
+        // Placeholder, se implementará después
+        return (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h5" gutterBottom>Vista de Transportistas</Typography>
+            <Typography variant="body1" color="text.secondary">
+              Esta sección se implementará en la siguiente fase
+            </Typography>
+          </Box>
+        );
       case 'customers':
-        return <CustomersTab />;
+        // Placeholder, se implementará después
+        return (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h5" gutterBottom>Vista de Clientes</Typography>
+            <Typography variant="body1" color="text.secondary">
+              Esta sección se implementará en la siguiente fase
+            </Typography>
+          </Box>
+        );
       case 'finances':
-        return <FinancesTab data={data} />;
+        // Placeholder, se implementará después
+        return (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h5" gutterBottom>Vista de Finanzas</Typography>
+            <Typography variant="body1" color="text.secondary">
+              Esta sección se implementará en la siguiente fase
+            </Typography>
+          </Box>
+        );
       case 'incidents':
-        return <IncidentsTab data={data} />;
+        // Placeholder, se implementará después
+        return (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h5" gutterBottom>Vista de Incidencias</Typography>
+            <Typography variant="body1" color="text.secondary">
+              Esta sección se implementará en la siguiente fase
+            </Typography>
+          </Box>
+        );
       default:
         return null;
     }
@@ -51,17 +79,6 @@ export default function MainDashboard() {
 
   return (
     <Box sx={{ pb: 4 }}>
-      {/* Mostrar alerta cuando estamos usando datos de muestra */}
-      {error?.usingMockData && (
-        <Alert 
-          severity="warning" 
-          sx={{ mb: 3 }}
-          onClose={refreshDashboard}
-        >
-          Los datos mostrados son de prueba. Ocurrió un error al obtener los datos reales: {error.message}
-        </Alert>
-      )}
-      
       {renderActiveTab()}
     </Box>
   );

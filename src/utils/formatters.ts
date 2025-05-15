@@ -1,3 +1,4 @@
+// src/utils/formatters.ts
 /**
  * Formatea un número como moneda
  */
@@ -52,4 +53,40 @@ export const getRangeColorClass = (value: number, thresholds: { low: number, med
   if (value > medium) return 'text-green-600';
   if (value > low) return 'text-yellow-600';
   return 'text-red-600';
+};
+
+/**
+ * Formatea una fecha
+ */
+export const formatDate = (date: Date | string): string => {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
+  
+  return new Intl.DateTimeFormat('es-MX', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date);
+};
+
+/**
+ * Formatea un rango de tiempo para mostrar en la UI
+ */
+export const formatTimeRange = (timeRange: string, startDate?: string, endDate?: string): string => {
+  switch (timeRange) {
+    case '1d':
+      return 'Hoy';
+    case '7d':
+      return 'Últimos 7 días';
+    case '30d':
+      return 'Últimos 30 días';
+    case 'custom':
+      if (startDate && endDate) {
+        return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+      }
+      return 'Rango personalizado';
+    default:
+      return 'Período seleccionado';
+  }
 };

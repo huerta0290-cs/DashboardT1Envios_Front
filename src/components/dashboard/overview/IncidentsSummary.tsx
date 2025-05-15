@@ -1,6 +1,8 @@
+// src/components/dashboard/overview/IncidentsSummary.tsx
 'use client';
 
-import { Box, Grid, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Stack, Grid, Typography, Box } from '@mui/material';
 import { 
   PieChart, 
   Pie, 
@@ -19,8 +21,27 @@ interface IncidentsSummaryProps {
 }
 
 export default function IncidentsSummary({ incidents }: IncidentsSummaryProps) {
+  const [filter, setFilter] = useState('Todos');
   const { total, resolved, byType } = incidents;
   const pending = total - resolved;
+
+  // Filtrar tipos de incidencias según selección
+  let filteredTypes = [...byType];
+  if (filter === 'Abiertos') {
+    // Simular datos filtrados (en producción esto vendría del backend)
+    const openPercent = pending / total;
+    filteredTypes = byType.map(type => ({
+      ...type,
+      value: Math.round(type.value * openPercent)
+    }));
+  } else if (filter === 'Cerrados') {
+    // Simular datos filtrados (en producción esto vendría del backend)
+    const resolvedPercent = resolved / total;
+    filteredTypes = byType.map(type => ({
+      ...type,
+      value: Math.round(type.value * resolvedPercent)
+    }));
+  }
 
   return (
     <CardComponent 
@@ -28,17 +49,18 @@ export default function IncidentsSummary({ incidents }: IncidentsSummaryProps) {
       actions={
         <DropdownFilter 
           options={['Todos', 'Abiertos', 'Cerrados']} 
-          defaultValue="Todos" 
+          defaultValue="Todos"
+          onChange={setFilter}
         />
       }
       height={350}
     >
-      <Grid container sx={{ height: '100%' }}>
-        <Grid size={6}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ height: '100%' }}>
+        <Box sx={{ width: { xs: '100%', sm: '50%' }, height: { xs: 200, sm: '100%' } }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={byType}
+                data={filteredTypes}
                 cx="50%"
                 cy="50%"
                 innerRadius={40}
@@ -47,7 +69,7 @@ export default function IncidentsSummary({ incidents }: IncidentsSummaryProps) {
                 paddingAngle={1}
                 dataKey="value"
               >
-                {byType.map((entry, index) => (
+                {filteredTypes.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
@@ -72,10 +94,15 @@ export default function IncidentsSummary({ incidents }: IncidentsSummaryProps) {
               />
             </PieChart>
           </ResponsiveContainer>
-        </Grid>
+        </Box>
         
-        <Grid size={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Box sx={{ mb: 3 }}>
+        <Stack 
+          direction="column" 
+          justifyContent="center" 
+          spacing={3}
+          sx={{ width: { xs: '100%', sm: '50%' }, pl: { xs: 0, sm: 3 }, pt: { xs: 2, sm: 0 } }}
+        >
+          <Box>
             <Typography variant="h6" fontWeight="medium">
               {formatNumber(total)}
             </Typography>
@@ -84,7 +111,7 @@ export default function IncidentsSummary({ incidents }: IncidentsSummaryProps) {
             </Typography>
           </Box>
           
-          <Box sx={{ mb: 3 }}>
+          <Box>
             <Typography variant="h6" fontWeight="medium" color="success.main">
               {formatNumber(resolved)}
             </Typography>
@@ -101,8 +128,8 @@ export default function IncidentsSummary({ incidents }: IncidentsSummaryProps) {
               Incidencias pendientes
             </Typography>
           </Box>
-        </Grid>
-      </Grid>
+        </Stack>
+      </Stack>
     </CardComponent>
   );
 }

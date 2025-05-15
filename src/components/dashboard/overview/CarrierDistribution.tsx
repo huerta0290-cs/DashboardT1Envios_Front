@@ -1,3 +1,4 @@
+// src/components/dashboard/overview/CarrierDistribution.tsx
 'use client';
 
 import { Box } from '@mui/material';
@@ -18,46 +19,30 @@ interface CarrierDistributionProps {
 }
 
 const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = (carriers: Carrier[]) => ({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  percent,
-  name,
-  index
+const renderCustomizedLabel = ({ 
+  cx, 
+  cy, 
+  midAngle, 
+  innerRadius, 
+  outerRadius, 
+  percent, 
+  name 
 }: any) => {
-  // Cálculo para posicionar las etiquetas externas
-  const sin = Math.sin(-midAngle * RADIAN);
-  const cos = Math.cos(-midAngle * RADIAN);
-  const sx = cx + (outerRadius + 10) * cos;
-  const sy = cy + (outerRadius + 10) * sin;
-  const mx = cx + (outerRadius + 30) * cos;
-  const my = cy + (outerRadius + 30) * sin;
-  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-  const ey = my;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.65;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
   return (
-    <g>
-      {/* Línea que conecta el segmento con la etiqueta */}
-      <path 
-        d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} 
-        stroke={carriers[index].color} 
-        fill="none" 
-      />
-      {/* Texto de la etiqueta */}
-      <text 
-        x={ex + (cos >= 0 ? 1 : -1) * 12} 
-        y={ey} 
-        textAnchor={textAnchor} 
-        fill={carriers[index].color}
-        style={{ fontSize: '14px', fontWeight: 500 }}
-      >
-        {`${name} ${(percent * 100).toFixed(0)}%`}
-      </text>
-    </g>
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
+      textAnchor={x > cx ? 'start' : 'end'} 
+      dominantBaseline="central"
+      style={{ fontSize: '12px', fontWeight: 500 }}
+    >
+      {`${name} ${(percent * 100).toFixed(0)}%`}
+    </text>
   );
 };
 
@@ -72,11 +57,11 @@ export default function CarrierDistribution({ carriers }: CarrierDistributionPro
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={renderCustomizedLabel(carriers)}
+              label={renderCustomizedLabel}
               innerRadius={60}
-              outerRadius={110}
+              outerRadius={120}
               fill="#8884d8"
-              paddingAngle={2}
+              paddingAngle={1}
               dataKey="guides"
               nameKey="name"
             >
@@ -97,12 +82,8 @@ export default function CarrierDistribution({ carriers }: CarrierDistributionPro
               layout="horizontal" 
               verticalAlign="bottom" 
               align="center"
-              iconType="circle"
-              wrapperStyle={{
-                paddingTop: '20px'
-              }}
               formatter={(value, entry, index) => (
-                <span style={{ color: carriers[index].color, fontSize: '0.875rem' }}>{value}</span>
+                <span style={{ color: '#1F2937', fontSize: '0.875rem' }}>{value}</span>
               )}
             />
           </PieChart>

@@ -1,8 +1,15 @@
+// src/redux/provider.tsx
 'use client';
 
+import { ThemeRegistry } from '../theme/ThemeRegistry';
 import { Provider } from 'react-redux';
 import { store } from './store';
+import { ReactNode } from 'react';
 
-export function ReduxProvider({ children }: { children: React.ReactNode }) {
-  return <Provider store={store}>{children}</Provider>;
+interface ReduxProviderProps {
+  children: ReactNode;
+}
+
+export function ReduxProvider({ children }: ReduxProviderProps) {
+  return <ThemeRegistry><Provider store={store}>{children}</Provider></ThemeRegistry>;
 }

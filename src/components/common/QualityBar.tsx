@@ -1,6 +1,7 @@
+// src/components/common/QualityBar.tsx
 'use client';
 
-import { Box, Typography, LinearProgress } from '@mui/material';
+import { Box, Typography, LinearProgress, Stack } from '@mui/material';
 
 interface QualityBarProps {
   label: string;
@@ -10,15 +11,15 @@ interface QualityBarProps {
 
 export default function QualityBar({ label, value, color }: QualityBarProps) {
   return (
-    <Box mb={2}>
-      <Box display="flex" justifyContent="space-between" mb={0.5}>
+    <Box sx={{ mb: 3, '&:last-child': { mb: 0 } }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
         <Typography variant="body2" color="text.secondary">
           {label}
         </Typography>
         <Typography variant="body2" fontWeight="medium" color={`${color}.main`}>
           {value.toFixed(1)}%
         </Typography>
-      </Box>
+      </Stack>
       <LinearProgress 
         variant="determinate" 
         value={value} 

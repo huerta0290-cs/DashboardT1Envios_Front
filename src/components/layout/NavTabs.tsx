@@ -1,3 +1,4 @@
+// src/components/layout/NavTabs.tsx
 'use client';
 
 import { Box, Tab, Tabs } from '@mui/material';
@@ -8,13 +9,16 @@ import {
   AttachMoney as AttachMoneyIcon, 
   Warning as WarningIcon 
 } from '@mui/icons-material';
-import { useDashboard } from '@/utils/dashboard-hooks';
+
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { setActiveTab } from '@/redux/features/dashboardSlice';
 
 export default function NavTabs() {
-  const { activeTab, updateActiveTab } = useDashboard();
+  const dispatch = useAppDispatch();
+  const { activeTab } = useAppSelector(state => state.dashboard);
   
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
-    updateActiveTab(newValue as any);
+    dispatch(setActiveTab(newValue as any));
   };
   
   return (

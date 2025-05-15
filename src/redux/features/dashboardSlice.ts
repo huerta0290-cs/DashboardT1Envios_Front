@@ -1,9 +1,8 @@
 // src/redux/features/dashboardSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { dashboardService } from '../../service/api';
-import { generateMockData } from '../../service/mockData';
+import { dashboardService } from '../../service/api'; // Importar el servicio API en lugar de axios
 
-// Definición de tipos
+// Definir tipos
 export interface KPI {
   guidesGenerated: number;
   previousGuidesGenerated: number;
@@ -105,17 +104,13 @@ export interface DashboardState {
   timeRange: '1d' | '7d' | '30d' | 'custom';
   activeTab: 'overview' | 'carriers' | 'customers' | 'finances' | 'incidents';
   isLoading: boolean;
-  error: {
-    message: string;
-    code?: string;
-    usingMockData?: boolean;
-  } | null;
+  error: string | null;
   comparisonEnabled: boolean;
   selectedCarrier: string;
   mapView: 'volume' | 'incidents';
   customDateRange: {
-    fromDate: string | null;
-    toDate: string | null;
+    startDate: string | null;
+    endDate: string | null;
   };
 }
 
@@ -129,57 +124,36 @@ const initialState: DashboardState = {
   selectedCarrier: 'all',
   mapView: 'volume',
   customDateRange: {
-    fromDate: null,
-    toDate: null
+    startDate: null,
+    endDate: null
   }
 };
 
-// Thunk para obtener los datos del dashboard
+// Thunk para cargar datos del dashboard utilizando el servicio API
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchData',
-  async (timeRange: string, { getState, rejectWithValue }) => {
+  async (params: { 
+    timeRange: '1d' | '7d' | '30d' | 'custom'; 
+    startDate?: string; 
+    endDate?: string 
+  }, { rejectWithValue }) => {
     try {
-      const state = getState() as { dashboard: DashboardState };
-      let params = timeRange;
-      
-      // Si es custom, agregar fechas del rango personalizado
-      if (timeRange === 'custom' && state.dashboard.customDateRange.fromDate && state.dashboard.customDateRange.toDate) {
-        params = `custom&fromDate=${state.dashboard.customDateRange.fromDate}&toDate=${state.dashboard.customDateRange.toDate}`;
-      }
-      
-      const response = await dashboardService.getOverview(params);
-      return response;
+      // Usar dashboardService en lugar de axios directamente
+      return await dashboardService.getOverview(
+        params.timeRange,
+        params.startDate,
+        params.endDate
+      );
     } catch (error: any) {
-      // Si es un error 404, devolvemos un valor específico
-      if (error.isNotFound) {
-        return rejectWithValue({
-          message: error.userMessage,
-          code: 'NOT_FOUND'
-        });
-      }
-      
-      return rejectWithValue({
-        message: error.userMessage || 'Error al cargar los datos del dashboard',
-        code: error.response?.status || 'UNKNOWN'
-      });
+      // Manejar el error
+      return rejectWithValue(
+        error.response?.data?.message || 
+        'Error al cargar los datos del dashboard'
+      );
     }
   }
 );
 
-// Thunk para obtener datos específicos de transportistas
-export const fetchCarriersData = createAsyncThunk(
-  'dashboard/fetchCarriersData',
-  async ({ timeRange, carrierId }: { timeRange: string; carrierId?: string }, { rejectWithValue }) => {
-    try {
-      const response = await dashboardService.getCarriers(timeRange, carrierId);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Error al cargar datos de transportistas');
-    }
-  }
-);
-
-// Slice del dashboard
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
@@ -199,7 +173,7 @@ const dashboardSlice = createSlice({
     setMapView: (state, action: PayloadAction<'volume' | 'incidents'>) => {
       state.mapView = action.payload;
     },
-    setCustomDateRange: (state, action: PayloadAction<{ fromDate: string; toDate: string }>) => {
+    setCustomDateRange: (state, action: PayloadAction<{ startDate: string; endDate: string }>) => {
       state.customDateRange = action.payload;
     },
     clearError: (state) => {
@@ -207,7 +181,6 @@ const dashboardSlice = createSlice({
     }
   },
   extraReducers: (builder) => {
-    // Casos para fetchDashboardData
     builder
       .addCase(fetchDashboardData.pending, (state) => {
         state.isLoading = true;
@@ -219,43 +192,7 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as {
-          message: string;
-          code?: string;
-        } || {
-          message: 'Error desconocido al cargar los datos'
-        };
-        
-        // Si es un error 404 u otro error, cargamos datos demo para que la UI no se quede vacía
-        const useMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA_ON_ERROR === 'true';
-        if (useMockData || (action.payload as any)?.code === 'NOT_FOUND' || (action.payload as any)?.code === 'NETWORK_ERROR') {
-          console.log('Usando datos de muestra debido a un error en la API');
-          state.data = generateMockData(state.timeRange);
-          // Añadir una bandera para indicar que estamos usando datos de muestra
-          state.error = {
-            ...state.error,
-            usingMockData: true
-          };
-        }
-      })
-      
-      // Casos para fetchCarriersData (puede extenderse según necesidades)
-      .addCase(fetchCarriersData.pending, (state) => {
-        // Opcional: establecer un estado de carga específico para transportistas
-      })
-      .addCase(fetchCarriersData.fulfilled, (state, action) => {
-        // Actualizar solo los datos de transportistas
-        if (state.data) {
-          state.data.carriers = action.payload;
-        }
-      })
-      .addCase(fetchCarriersData.rejected, (state, action) => {
-        state.error = action.payload as {
-          message: string;
-          code?: string;
-        } || {
-          message: 'Error al cargar datos de transportistas'
-        };
+        state.error = action.payload as string;
       });
   },
 });
@@ -264,7 +201,7 @@ export const {
   setTimeRange, 
   setActiveTab, 
   setComparisonEnabled, 
-  setSelectedCarrier, 
+  setSelectedCarrier,
   setMapView,
   setCustomDateRange,
   clearError

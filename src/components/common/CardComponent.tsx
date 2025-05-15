@@ -1,7 +1,8 @@
+// src/components/common/CardComponent.tsx
 'use client';
 
 import { ReactNode } from 'react';
-import { Box, Card, CardHeader, CardContent, Typography, Divider } from '@mui/material';
+import { Box, Card, CardHeader, CardContent, Typography, Stack } from '@mui/material';
 
 interface CardComponentProps {
   title: string;
@@ -17,7 +18,8 @@ export default function CardComponent({ title, children, actions, height }: Card
       sx={{ 
         height: height || 'auto',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        overflow: 'visible'
       }}
     >
       <CardHeader
