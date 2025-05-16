@@ -12,7 +12,6 @@ import QualityMetrics from '../overview/QualityMetrics';
 import IncidentsSummary from '../overview/IncidentsSummary';
 import SalesTrend from '../overview/SalesTrend';
 import { useAppSelector } from '@/redux/hooks';
-import { da } from 'date-fns/locale';
 
 interface OverviewTabProps {
   data: DashboardData;
@@ -20,8 +19,6 @@ interface OverviewTabProps {
 
 export default function OverviewTab({ data }: OverviewTabProps) {
   const { timeRange, mapView } = useAppSelector(state => state.dashboard);
-
-  console.log("DATA",data)
 
   return (
     <Stack spacing={3}>

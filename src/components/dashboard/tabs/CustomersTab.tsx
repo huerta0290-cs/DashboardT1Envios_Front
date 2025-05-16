@@ -3,26 +3,27 @@
 
 import { useEffect } from 'react';
 import { Box, Stack, CircularProgress, Alert } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '@/redux/store';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 import { fetchTopCustomers, fetchCustomerLevels, setSelectedLevel } from '@/redux/features/customersSlice';
 import CustomerLevelDistribution from '../customers/CustomerLevelDistribution';
 import WalletBalance from '../customers/WalletBalance';
 import CustomerNPS from '../customers/CustomerNPS';
 import TopCustomersTable from '../customers/TopCustomersTable';
 import CustomerTrends from '../customers/CustomerTrends';
-import { useDashboard } from '@/utils/dashboard-hooks';
 
 export default function CustomersTab() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { timeRange } = useDashboard();
+  const dispatch = useAppDispatch();
   const { 
     topCustomers, 
-    customerLevels, 
+    customerLevels,
+    timeRange, 
     isLoading, 
-    error, 
-    selectedLevel 
-  } = useSelector((state: RootState) => state.customers);
+    error,
+    selectedLevel
+  } = useAppSelector(state => state.customers);
+  
   const { kpis, walletData } = useSelector((state: RootState) => state.dashboard.data || { kpis: { npsScore: 0, npsChange: 0 }, walletData: { availableBalance: 0, consumedBalance: 0, lowBalanceAlerts: [] } });
 
   // Cargar datos de clientes cuando cambie el rango de tiempo
@@ -30,6 +31,11 @@ export default function CustomersTab() {
     dispatch(fetchTopCustomers({ timeRange }));
     dispatch(fetchCustomerLevels(timeRange));
   }, [dispatch, timeRange]);
+
+  useEffect(() =>{
+    if(!topCustomers) return;
+    console.log("CUSTOMER",topCustomers)
+  },[topCustomers])
 
   // Si está cargando, mostrar indicador de carga
   if (isLoading) {

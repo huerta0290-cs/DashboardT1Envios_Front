@@ -135,7 +135,7 @@ export const dashboardService = {
   getCarriers: async (timeRange: string) => {
     try {
       const response = await apiClient.get(`/carriers?timeRange=${timeRange}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener datos de transportistas');
     }
@@ -155,7 +155,7 @@ export const dashboardService = {
   getTopCustomers: async (timeRange: string, limit = 10) => {
     try {
       const response = await apiClient.get(`/customers/top?timeRange=${timeRange}&limit=${limit}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener los top clientes');
     }
@@ -165,7 +165,7 @@ export const dashboardService = {
   getCustomerLevels: async (timeRange: string) => {
     try {
       const response = await apiClient.get(`/customers/levels?timeRange=${timeRange}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener niveles de clientes');
     }

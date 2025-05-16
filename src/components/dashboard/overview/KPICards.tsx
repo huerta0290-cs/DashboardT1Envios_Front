@@ -17,7 +17,6 @@ interface KPICardsProps {
 }
 
 export default function KPICards({ kpis }: KPICardsProps) {
-  console.log("KPI",kpis)
   return (
     <Stack 
       direction={{ xs: 'column', sm: 'row' }}

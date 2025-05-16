@@ -104,7 +104,7 @@ export default function Header() {
 
   return (
     <>
-      <AppBar position="sticky" elevation={0} color="default">
+      <AppBar position="sticky" elevation={0} color="default" component="header">
         <Toolbar sx={{ px: 3 }}>
           <Box display="flex" alignItems="center">
             <Typography variant="h6" color="primary" fontWeight="bold" sx={{ mr: 0.5 }}>

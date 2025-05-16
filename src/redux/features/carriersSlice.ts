@@ -1,46 +1,64 @@
 // src/redux/features/carriersSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { Carrier } from './dashboardSlice';
+import { dashboardService } from '../../service/api';
+import { Carrier } from './dashboardSlice'; // Reutilizamos el tipo Carrier
+
+interface CarrierPerformanceData {
+  timeToDeliver: Record<string, number>;
+  incidentRates: Record<string, number>;
+  resolutionTimes: Record<string, number>;
+  volumeComparison: {
+    carrier: string;
+    thisMonth: number;
+    lastMonth: number;
+    change: number;
+  }[];
+}
 
 export interface CarriersState {
-  data: Carrier[];
+  carriers: Carrier[];
+  selectedCarrier: number | null;
   carrierDetails: Carrier | null;
+  performanceData: CarrierPerformanceData | null;
   isLoading: boolean;
+  detailsLoading: boolean;
   error: string | null;
-  selectedCarrier: string;
+  timeRange: string;
 }
 
 const initialState: CarriersState = {
-  data: [],
+  carriers: [],
+  selectedCarrier: null,
   carrierDetails: null,
+  performanceData: null,
   isLoading: false,
+  detailsLoading: false,
   error: null,
-  selectedCarrier: 'all',
+  timeRange: '7d'
 };
 
-// Thunk para cargar datos de transportistas
+// Thunk para cargar todos los transportistas
 export const fetchCarriers = createAsyncThunk(
-  'carriers/fetchCarriers',
+  'carriers/fetchAll',
   async (timeRange: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/carriers?timeRange=${timeRange}`);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue('Error al cargar los datos de transportistas');
+      // Usar el servicio API centralizado
+      return await dashboardService.getCarriers(timeRange);
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error al cargar los transportistas');
     }
   }
 );
 
-// Thunk para cargar datos de un transportista específico
+// Thunk para cargar detalles de un transportista específico
 export const fetchCarrierDetails = createAsyncThunk(
-  'carriers/fetchCarrierDetails',
-  async ({ carrierId, timeRange }: { carrierId: string, timeRange: string }, { rejectWithValue }) => {
+  'carriers/fetchDetails',
+  async ({ carrierId, timeRange }: { carrierId: number; timeRange: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/carriers/${carrierId}?timeRange=${timeRange}`);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue('Error al cargar los detalles del transportista');
+      // Usar el servicio API centralizado
+      return await dashboardService.getCarrierDetails(carrierId, timeRange);
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Error al cargar los detalles del transportista');
     }
   }
 );
@@ -49,40 +67,48 @@ const carriersSlice = createSlice({
   name: 'carriers',
   initialState,
   reducers: {
-    setSelectedCarrier: (state, action: PayloadAction<string>) => {
+    setSelectedCarrier: (state, action: PayloadAction<number | null>) => {
       state.selectedCarrier = action.payload;
     },
+    setTimeRange: (state, action: PayloadAction<string>) => {
+      state.timeRange = action.payload;
+    },
+    clearError: (state) => {
+      state.error = null;
+    }
   },
   extraReducers: (builder) => {
     builder
-      // Casos para fetchCarriers
+      // Manejar estados para fetchCarriers
       .addCase(fetchCarriers.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchCarriers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.data = action.payload;
+        state.carriers = action.payload;
       })
       .addCase(fetchCarriers.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      // Casos para fetchCarrierDetails
+      
+      // Manejar estados para fetchCarrierDetails
       .addCase(fetchCarrierDetails.pending, (state) => {
-        state.isLoading = true;
+        state.detailsLoading = true;
         state.error = null;
       })
       .addCase(fetchCarrierDetails.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.carrierDetails = action.payload;
+        state.detailsLoading = false;
+        state.carrierDetails = action.payload.carrier;
+        state.performanceData = action.payload.performance;
       })
       .addCase(fetchCarrierDetails.rejected, (state, action) => {
-        state.isLoading = false;
+        state.detailsLoading = false;
         state.error = action.payload as string;
       });
-  },
+  }
 });
 
-export const { setSelectedCarrier } = carriersSlice.actions;
+export const { setSelectedCarrier, setTimeRange, clearError } = carriersSlice.actions;
 export default carriersSlice.reducer;

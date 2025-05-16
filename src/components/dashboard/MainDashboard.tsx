@@ -6,8 +6,8 @@ import { useAppSelector } from '../../redux/hooks';
 import OverviewTab from './tabs/OverviewTab';
 
 // Importa los demás componentes de pestaña cuando sean necesarios
-// import CarriersTab from './tabs/CarriersTab';
-// import CustomersTab from './tabs/CustomersTab';
+import CarriersTab from './tabs/CarriersTab';
+import CustomersTab from './tabs/CustomersTab';
 // import FinancesTab from './tabs/FinancesTab';
 // import IncidentsTab from './tabs/IncidentsTab';
 
@@ -33,25 +33,9 @@ export default function MainDashboard() {
       case 'overview':
         return <OverviewTab data={data} />;
       case 'carriers':
-        // Placeholder, se implementará después
-        return (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h5" gutterBottom>Vista de Transportistas</Typography>
-            <Typography variant="body1" color="text.secondary">
-              Esta sección se implementará en la siguiente fase
-            </Typography>
-          </Box>
-        );
+        return <CarriersTab />;
       case 'customers':
-        // Placeholder, se implementará después
-        return (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h5" gutterBottom>Vista de Clientes</Typography>
-            <Typography variant="body1" color="text.secondary">
-              Esta sección se implementará en la siguiente fase
-            </Typography>
-          </Box>
-        );
+        return <CustomersTab />
       case 'finances':
         // Placeholder, se implementará después
         return (
