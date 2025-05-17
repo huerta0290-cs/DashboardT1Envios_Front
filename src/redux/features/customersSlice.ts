@@ -46,9 +46,13 @@ export interface CustomersState {
   isLoading: boolean;
   detailsLoading: boolean;
   error: string | null;
-  timeRange: string;
   levelFilter: string | null;
   selectedLevel: string;
+  timeRange: '1d' | '7d' | '30d' | 'custom';
+  customDateRange: {
+    startDate: string | null;
+    endDate: string | null;
+  };
 }
 
 const initialState: CustomersState = {
@@ -59,18 +63,31 @@ const initialState: CustomersState = {
   isLoading: false,
   detailsLoading: false,
   error: null,
-  timeRange: '7d',
   levelFilter: null,
-  selectedLevel: "all"
+  selectedLevel: "all",
+  timeRange: '7d',
+  customDateRange: {
+    startDate: null,
+    endDate: null
+  }
 };
 
 // Thunk para cargar los top clientes
 export const fetchTopCustomers = createAsyncThunk(
   'customers/fetchTop',
-  async ({ timeRange, limit = 10 }: { timeRange: string; limit?: number }, { rejectWithValue }) => {
+  async ({ params, limit = 10 }: { params: { 
+    timeRange: '1d' | '7d' | '30d' | 'custom'; 
+    startDate?: string; 
+    endDate?: string 
+  }; limit?: number }, { rejectWithValue }) => {
     try {
       // Usar el servicio API centralizado
-      return await dashboardService.getTopCustomers(timeRange, limit);
+      return await dashboardService.getTopCustomers(
+        params.timeRange,
+        params.startDate,
+        params.endDate, 
+        limit
+      );
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error al cargar los top clientes');
     }
@@ -149,7 +166,7 @@ const customersSlice = createSlice({
     setSelectedCustomer: (state, action: PayloadAction<number | null>) => {
       state.selectedCustomer = action.payload;
     },
-    setTimeRange: (state, action: PayloadAction<string>) => {
+    setCustomerTimeRange: (state, action: PayloadAction<'1d' | '7d' | '30d' | 'custom'>) => {
       state.timeRange = action.payload;
     },
     setLevelFilter: (state, action: PayloadAction<string | null>) => {
@@ -160,6 +177,9 @@ const customersSlice = createSlice({
     },
     setSelectedLevel: (state, action: PayloadAction<string>) => {
       state.selectedLevel = action.payload;
+    },
+    setCustomerCustomDateRange: (state, action: PayloadAction<{ startDate: string; endDate: string }>) => {
+      state.customDateRange = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -210,10 +230,11 @@ const customersSlice = createSlice({
 
 export const { 
   setSelectedCustomer, 
-  setTimeRange, 
+  setCustomerTimeRange, 
   setLevelFilter, 
   clearError,
-  setSelectedLevel
+  setSelectedLevel,
+  setCustomerCustomDateRange
 } = customersSlice.actions;
 
 export default customersSlice.reducer;

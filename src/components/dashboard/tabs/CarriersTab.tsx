@@ -18,7 +18,8 @@ export default function CarriersTab() {
     selectedCarrier, 
     isLoading, 
     error, 
-    timeRange 
+    timeRange,
+    customDateRange 
   } = useAppSelector(state => state.carriers);
   
   // También necesitamos obtener el mapeo de los transportistas en el state del dashboard
@@ -27,20 +28,25 @@ export default function CarriersTab() {
   // Estado local para manejar el carrier seleccionado
   const [localSelectedCarrier, setLocalSelectedCarrier] = useState<string>('all');
 
-  // Efecto para cargar los transportistas
   useEffect(() => {
-    dispatch(fetchCarriers(timeRange));
-  }, [dispatch, timeRange]);
+    fetchData();
+  }, [dispatch, timeRange, customDateRange]);
 
-  // Si tenemos un carrierId seleccionado y no son todos, cargamos sus detalles
-  useEffect(() => {
-    if (selectedCarrier && String(selectedCarrier) !== 'all') {
-      dispatch(fetchCarrierDetails({ 
-        carrierId: parseInt(String(selectedCarrier)), 
-        timeRange 
-      }));
-    }
-  }, [dispatch, selectedCarrier, timeRange]);
+  // Función para cargar datos
+  const fetchData = () => {
+    // Preparar parámetros según si es rango personalizado o no
+    const params = {
+      timeRange,
+      ...(timeRange === 'custom' && customDateRange.startDate && customDateRange.endDate 
+        ? { 
+            startDate: customDateRange.startDate, 
+            endDate: customDateRange.endDate 
+          }
+        : {})
+    };
+
+    dispatch(fetchCarriers(params));
+  }
 
   // Si el componente carga y aún no hay datos, mostramos un mensaje de carga
   if (isLoading && carriers.length === 0) {

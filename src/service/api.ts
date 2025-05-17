@@ -132,9 +132,14 @@ export const dashboardService = {
   },
   
   // Endpoint para datos de transportistas
-  getCarriers: async (timeRange: string) => {
+  getCarriers: async (timeRange: string, startDate?: string, endDate?: string) => {
     try {
-      const response = await apiClient.get(`/carriers?timeRange=${timeRange}`);
+      let queryParams = `timeRange=${timeRange}`;
+      if (timeRange === 'custom' && startDate && endDate) {
+        queryParams += `&fromDate=${startDate}&toDate=${endDate}`;
+      }
+
+      const response = await apiClient.get(`/carriers?${queryParams}`);
       return response.data.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener datos de transportistas');
@@ -152,9 +157,14 @@ export const dashboardService = {
   },
   
   // Endpoint para clientes top
-  getTopCustomers: async (timeRange: string, limit = 10) => {
+  getTopCustomers: async (timeRange: string, startDate?: string, endDate?: string, limit = 10) => {
     try {
-      const response = await apiClient.get(`/customers/top?timeRange=${timeRange}&limit=${limit}`);
+      let queryParams = `timeRange=${timeRange}`;
+      if (timeRange === 'custom' && startDate && endDate) {
+        queryParams += `&fromDate=${startDate}&toDate=${endDate}`;
+      }
+
+      const response = await apiClient.get(`/customers/top?${queryParams}&limit=${limit}`);
       return response.data.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener los top clientes');

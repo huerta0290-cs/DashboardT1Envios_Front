@@ -23,7 +23,11 @@ export interface CarriersState {
   isLoading: boolean;
   detailsLoading: boolean;
   error: string | null;
-  timeRange: string;
+  timeRange: '1d' | '7d' | '30d' | 'custom';
+  customDateRange: {
+    startDate: string | null;
+    endDate: string | null;
+  };
 }
 
 const initialState: CarriersState = {
@@ -34,16 +38,28 @@ const initialState: CarriersState = {
   isLoading: false,
   detailsLoading: false,
   error: null,
-  timeRange: '7d'
+  timeRange: '7d',
+  customDateRange: {
+    startDate: null,
+    endDate: null
+  }
 };
 
 // Thunk para cargar todos los transportistas
 export const fetchCarriers = createAsyncThunk(
   'carriers/fetchAll',
-  async (timeRange: string, { rejectWithValue }) => {
+  async (params: { 
+    timeRange: '1d' | '7d' | '30d' | 'custom'; 
+    startDate?: string; 
+    endDate?: string 
+  }, { rejectWithValue }) => {
     try {
       // Usar el servicio API centralizado
-      return await dashboardService.getCarriers(timeRange);
+      return await dashboardService.getCarriers(
+        params.timeRange,
+        params.startDate,
+        params.endDate
+      );
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error al cargar los transportistas');
     }
@@ -70,12 +86,15 @@ const carriersSlice = createSlice({
     setSelectedCarrier: (state, action: PayloadAction<number | null>) => {
       state.selectedCarrier = action.payload;
     },
-    setTimeRange: (state, action: PayloadAction<string>) => {
+    setCarrierTimeRange: (state, action: PayloadAction<'1d' | '7d' | '30d' | 'custom'>) => {
       state.timeRange = action.payload;
     },
     clearError: (state) => {
       state.error = null;
-    }
+    },
+    setCarrierCustomDateRange: (state, action: PayloadAction<{ startDate: string; endDate: string }>) => {
+      state.customDateRange = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -110,5 +129,5 @@ const carriersSlice = createSlice({
   }
 });
 
-export const { setSelectedCarrier, setTimeRange, clearError } = carriersSlice.actions;
+export const { setSelectedCarrier, setCarrierTimeRange, clearError, setCarrierCustomDateRange } = carriersSlice.actions;
 export default carriersSlice.reducer;

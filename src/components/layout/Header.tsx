@@ -41,6 +41,14 @@ import {
   setComparisonEnabled, 
   setCustomDateRange 
 } from '@/redux/features/dashboardSlice';
+import {
+  setCarrierTimeRange,
+  setCarrierCustomDateRange
+} from '@/redux/features/carriersSlice';
+import {
+  setCustomerTimeRange,
+  setCustomerCustomDateRange
+} from '@/redux/features/customersSlice';
 
 export default function Header() {
   const dispatch = useAppDispatch();
@@ -73,6 +81,8 @@ export default function Header() {
       setDateDialogOpen(true);
     } else {
       dispatch(setTimeRange(newRange));
+      dispatch(setCarrierTimeRange(newRange))
+      dispatch(setCustomerTimeRange(newRange))
     }
   };
 
@@ -95,9 +105,19 @@ export default function Header() {
         startDate: formattedStartDate,
         endDate: formattedEndDate
       }));
+      dispatch(setCarrierCustomDateRange({
+        startDate: formattedStartDate,
+        endDate: formattedEndDate
+      }));
+      dispatch(setCustomerCustomDateRange({
+        startDate: formattedStartDate,
+        endDate: formattedEndDate
+      }));
       
       // Establecer el rango de tiempo como personalizado
       dispatch(setTimeRange('custom'));
+      dispatch(setCarrierTimeRange('custom'))
+      dispatch(setCustomerTimeRange('custom'))
     }
     setDateDialogOpen(false);
   };

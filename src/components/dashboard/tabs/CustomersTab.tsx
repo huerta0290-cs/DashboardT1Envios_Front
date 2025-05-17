@@ -18,24 +18,36 @@ export default function CustomersTab() {
   const { 
     topCustomers, 
     customerLevels,
-    timeRange, 
     isLoading, 
     error,
-    selectedLevel
+    selectedLevel,
+    timeRange,
+    customDateRange
   } = useAppSelector(state => state.customers);
   
   const { kpis, walletData } = useSelector((state: RootState) => state.dashboard.data || { kpis: { npsScore: 0, npsChange: 0 }, walletData: { availableBalance: 0, consumedBalance: 0, lowBalanceAlerts: [] } });
 
-  // Cargar datos de clientes cuando cambie el rango de tiempo
   useEffect(() => {
-    dispatch(fetchTopCustomers({ timeRange }));
-    dispatch(fetchCustomerLevels(timeRange));
-  }, [dispatch, timeRange]);
+    fetchData();
+  }, [dispatch, timeRange, customDateRange]);
 
-  useEffect(() =>{
-    if(!topCustomers) return;
-    console.log("CUSTOMER",topCustomers)
-  },[topCustomers])
+  // Función para cargar datos
+    const fetchData = () => {
+      // Preparar parámetros según si es rango personalizado o no
+      const params = {
+        timeRange,
+        ...(timeRange === 'custom' && customDateRange.startDate && customDateRange.endDate 
+          ? { 
+              startDate: customDateRange.startDate, 
+              endDate: customDateRange.endDate 
+            }
+          : {})
+      };
+  
+      dispatch(fetchTopCustomers({params}));
+      dispatch(fetchCustomerLevels(timeRange));
+    }
+
 
   // Si está cargando, mostrar indicador de carga
   if (isLoading) {
