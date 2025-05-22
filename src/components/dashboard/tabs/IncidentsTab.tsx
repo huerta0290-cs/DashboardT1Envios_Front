@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Box, Stack } from '@mui/material';
 import { DashboardData } from '@/redux/features/dashboardSlice';
 import IncidentsKPIs from '../incidents/IncidentsKPIs';
@@ -7,12 +8,30 @@ import IncidentsByType from '../incidents/IncidentsByType';
 import IncidentsTrend from '../incidents/IncidentsTrend';
 import IncidentsResolutionTime from '../incidents/IncidentsResolutionTime';
 import IncidentsTable from '../incidents/IncidentsTable';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { fetchIncidents } from '@/redux/features/incidentsSlice'
 
 interface IncidentsTabProps {
   data: DashboardData;
 }
 
 export default function IncidentsTab({ data }: IncidentsTabProps) {
+  const dispatch = useAppDispatch();
+  const { 
+    isLoading, 
+    error, 
+    incidents
+  } = useAppSelector(state => state.incidents);
+
+  useEffect(() => {
+    dispatch(fetchIncidents());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if(!incidents) return;
+    console.log("Incidencias",incidents)
+  }, [incidents]);
+
   return (
     <Stack spacing={3}>
       {/* KPIs de incidencias */}
@@ -35,11 +54,13 @@ export default function IncidentsTab({ data }: IncidentsTabProps) {
       />
       
       {/* Tabla de incidencias recientes */}
-      <IncidentsTable 
-        incidents={data.incidents} 
-        carriers={data.carriers} 
-        customers={data.topCustomers} 
-      />
+      {incidents.length>0 && 
+        <IncidentsTable 
+          incidents={incidents} 
+          carriers={data.carriers} 
+          customers={data.topCustomers} 
+        />
+      }
     </Stack>
   );
 }

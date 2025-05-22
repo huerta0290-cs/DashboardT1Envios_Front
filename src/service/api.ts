@@ -132,15 +132,21 @@ export const dashboardService = {
   },
   
   // Endpoint para datos de transportistas
-  getCarriers: async (timeRange: string, startDate?: string, endDate?: string) => {
+  getCarriers: async (timeRange: string, startDate?: string, endDate?: string, page?:number, pageSize?:number, search?:string) => {
     try {
-      let queryParams = `timeRange=${timeRange}`;
+      // Construir query params
+      let queryParams = `page=${page}&page_size=${pageSize}&timeRange=${timeRange}`;
       if (timeRange === 'custom' && startDate && endDate) {
-        queryParams += `&fromDate=${startDate}&toDate=${endDate}`;
+        queryParams += `&startDate=${startDate}&endDate=${endDate}`;
+      }
+
+       // Añadir búsqueda si existe
+      if (search && search.trim()) {
+        queryParams += `&search=${encodeURIComponent(search.trim())}`;
       }
 
       const response = await apiClient.get(`/carriers?${queryParams}`);
-      return response.data.data;
+      return response.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener datos de transportistas');
     }
@@ -157,15 +163,21 @@ export const dashboardService = {
   },
   
   // Endpoint para clientes top
-  getTopCustomers: async (timeRange: string, startDate?: string, endDate?: string, limit = 10) => {
+  getCustomers: async (timeRange: string, startDate?: string, endDate?: string, page?:number, pageSize?:number, search?:string) => {
     try {
-      let queryParams = `timeRange=${timeRange}`;
+      // Construir query params
+      let queryParams = `page=${page}&page_size=${pageSize}&timeRange=${timeRange}`;
       if (timeRange === 'custom' && startDate && endDate) {
-        queryParams += `&fromDate=${startDate}&toDate=${endDate}`;
+        queryParams += `&startDate=${startDate}&endDate=${endDate}`;
       }
 
-      const response = await apiClient.get(`/customers/top?${queryParams}&limit=${limit}`);
-      return response.data.data;
+       // Añadir búsqueda si existe
+      if (search && search.trim()) {
+        queryParams += `&search=${encodeURIComponent(search.trim())}`;
+      }
+
+      const response = await apiClient.get(`/customers/top?${queryParams}`);
+      return response.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener los top clientes');
     }
@@ -182,19 +194,25 @@ export const dashboardService = {
   },
   
   // Endpoint para obtener resumen de incidencias
-  getIncidentsSummary: async (timeRange: string) => {
+  getIncidents: async () => {
     try {
-      const response = await apiClient.get(`/incidents/summary?timeRange=${timeRange}`);
-      return response.data;
+      const response = await apiClient.get(`/incidents`);
+      return response.data.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener resumen de incidencias');
     }
   },
   
   // Endpoint para obtener datos financieros
-  getFinancialSummary: async (timeRange: string) => {
+  getFinancialSummary: async (timeRange: string, startDate?: string, endDate?: string) => {
     try {
-      const response = await apiClient.get(`/finances/summary?timeRange=${timeRange}`);
+
+      let queryParams = `timeRange=${timeRange}`;
+      if (timeRange === 'custom' && startDate && endDate) {
+        queryParams += `&fromDate=${startDate}&toDate=${endDate}`;
+      }
+
+      const response = await apiClient.get(`/finances/summary?${queryParams}`);
       return response.data;
     } catch (error) {
       handleApiError(error, 'Error al obtener resumen financiero');

@@ -59,9 +59,13 @@ export interface FinancesState {
   revenueForecast: RevenueForecast[];
   isLoading: boolean;
   error: string | null;
-  timeRange: string;
   viewMode: 'current' | 'previous' | 'comparison';
   forecastPeriod: 'monthly' | 'quarterly' | 'yearly';
+  timeRange: '1d' | '7d' | '30d' | 'custom';
+  customDateRange: {
+    startDate: string | null;
+    endDate: string | null;
+  };
 }
 
 const initialState: FinancesState = {
@@ -72,18 +76,30 @@ const initialState: FinancesState = {
   revenueForecast: [],
   isLoading: false,
   error: null,
-  timeRange: '7d',
   viewMode: 'current',
-  forecastPeriod: 'monthly'
+  forecastPeriod: 'monthly',
+  timeRange: '7d',
+  customDateRange: {
+    startDate: null,
+    endDate: null
+  }
 };
 
 // Thunk para cargar resumen financiero
 export const fetchFinancialSummary = createAsyncThunk(
   'finances/fetchSummary',
-  async (timeRange: string, { rejectWithValue }) => {
+  async (params: { 
+    timeRange: '1d' | '7d' | '30d' | 'custom'; 
+    startDate?: string; 
+    endDate?: string 
+  }, { rejectWithValue }) => {
     try {
       // Usar el servicio API centralizado
-      return await dashboardService.getFinancialSummary(timeRange);
+      return await dashboardService.getFinancialSummary(
+        params.timeRange,
+        params.startDate,
+        params.endDate
+      );
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error al cargar el resumen financiero');
     }
@@ -259,7 +275,7 @@ const financesSlice = createSlice({
   name: 'finances',
   initialState,
   reducers: {
-    setTimeRange: (state, action: PayloadAction<string>) => {
+    setFinanceTimeRange: (state, action: PayloadAction<'1d' | '7d' | '30d' | 'custom'>) => {
       state.timeRange = action.payload;
     },
     setViewMode: (state, action: PayloadAction<'current' | 'previous' | 'comparison'>) => {
@@ -270,7 +286,10 @@ const financesSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
-    }
+    },
+    setFinanceCustomDateRange: (state, action: PayloadAction<{ startDate: string; endDate: string }>) => {
+      state.customDateRange = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -347,10 +366,11 @@ const financesSlice = createSlice({
 });
 
 export const { 
-  setTimeRange, 
+  setFinanceTimeRange, 
   setViewMode, 
   setForecastPeriod,
-  clearError 
+  clearError,
+  setFinanceCustomDateRange 
 } = financesSlice.actions;
 
 export default financesSlice.reducer;

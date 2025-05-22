@@ -29,7 +29,7 @@ export default function BalanceAlerts({ walletData }: BalanceAlertsProps) {
             pl: 0, 
             mt: 1,
             height: '100%',
-            overflow: 'auto',
+            overflow: 'none',
           }}
         >
           {lowBalanceAlerts.map((alert, index) => (

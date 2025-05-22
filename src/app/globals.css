@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* En globals.css o en el componente */
+@import 'leaflet/dist/leaflet.css';
 
 :root {
   --background: #ffffff;
@@ -23,4 +25,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Opcional: Ajustes para Material-UI */
+.leaflet-container {
+  border-radius: 8px;
 }

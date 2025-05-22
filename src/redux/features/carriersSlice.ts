@@ -2,6 +2,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { dashboardService } from '../../service/api';
 import { Carrier } from './dashboardSlice'; // Reutilizamos el tipo Carrier
+import { se } from 'date-fns/locale';
+
+export interface Pagination {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
 
 interface CarrierPerformanceData {
   timeToDeliver: Record<string, number>;
@@ -28,6 +36,7 @@ export interface CarriersState {
     startDate: string | null;
     endDate: string | null;
   };
+  pagination: Pagination | null;
 }
 
 const initialState: CarriersState = {
@@ -42,7 +51,8 @@ const initialState: CarriersState = {
   customDateRange: {
     startDate: null,
     endDate: null
-  }
+  },
+  pagination: null
 };
 
 // Thunk para cargar todos los transportistas
@@ -51,14 +61,20 @@ export const fetchCarriers = createAsyncThunk(
   async (params: { 
     timeRange: '1d' | '7d' | '30d' | 'custom'; 
     startDate?: string; 
-    endDate?: string 
+    endDate?: string;
+    page: number;
+    pageSize: number; 
+    search?: string;
   }, { rejectWithValue }) => {
     try {
       // Usar el servicio API centralizado
       return await dashboardService.getCarriers(
         params.timeRange,
         params.startDate,
-        params.endDate
+        params.endDate,
+        params.page,
+        params.pageSize,
+        params.search
       );
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error al cargar los transportistas');
@@ -105,7 +121,8 @@ const carriersSlice = createSlice({
       })
       .addCase(fetchCarriers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.carriers = action.payload;
+        state.carriers = action.payload.data;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchCarriers.rejected, (state, action) => {
         state.isLoading = false;

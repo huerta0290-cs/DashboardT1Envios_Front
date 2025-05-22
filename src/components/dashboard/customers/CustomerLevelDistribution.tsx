@@ -32,7 +32,7 @@ export default function CustomerLevelDistribution({ customerLevels }: CustomerLe
               paddingAngle={1}
               dataKey="value"
               nameKey="name"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              // label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
             >
               {customerLevels.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />

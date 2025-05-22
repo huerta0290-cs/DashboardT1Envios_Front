@@ -38,7 +38,7 @@ export default function TopCustomers({ customers }: TopCustomersProps) {
   return (
     <CardComponent 
       title="Top Clientes" 
-      actions={<ViewAllButton />}
+      // actions={<ViewAllButton />}
       height={400}
     >
       <Box component="ul" sx={{ 

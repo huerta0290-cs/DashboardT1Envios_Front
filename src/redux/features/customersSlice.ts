@@ -3,6 +3,13 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { dashboardService } from '../../service/api';
 import { TopCustomer, CustomerLevel } from './dashboardSlice'; // Reutilizamos los tipos
 
+export interface Pagination {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
 interface CustomerTrends {
   nps: {
     date: string;
@@ -53,6 +60,7 @@ export interface CustomersState {
     startDate: string | null;
     endDate: string | null;
   };
+  pagination: Pagination | null;
 }
 
 const initialState: CustomersState = {
@@ -69,24 +77,30 @@ const initialState: CustomersState = {
   customDateRange: {
     startDate: null,
     endDate: null
-  }
+  },
+  pagination: null
 };
 
 // Thunk para cargar los top clientes
-export const fetchTopCustomers = createAsyncThunk(
+export const fetchCustomers = createAsyncThunk(
   'customers/fetchTop',
   async ({ params, limit = 10 }: { params: { 
     timeRange: '1d' | '7d' | '30d' | 'custom'; 
     startDate?: string; 
-    endDate?: string 
+    endDate?: string;
+    page: number;
+    pageSize: number; 
+    search?: string;
   }; limit?: number }, { rejectWithValue }) => {
     try {
       // Usar el servicio API centralizado
-      return await dashboardService.getTopCustomers(
+      return await dashboardService.getCustomers(
         params.timeRange,
         params.startDate,
         params.endDate, 
-        limit
+         params.page,
+        params.pageSize,
+        params.search,
       );
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error al cargar los top clientes');
@@ -185,15 +199,16 @@ const customersSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Manejar estados para fetchTopCustomers
-      .addCase(fetchTopCustomers.pending, (state) => {
+      .addCase(fetchCustomers.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchTopCustomers.fulfilled, (state, action) => {
+      .addCase(fetchCustomers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.topCustomers = action.payload;
+        state.topCustomers = action.payload.data;
+        state.pagination = action.payload.pagination;
       })
-      .addCase(fetchTopCustomers.rejected, (state, action) => {
+      .addCase(fetchCustomers.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })

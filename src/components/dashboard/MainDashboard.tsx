@@ -8,8 +8,8 @@ import OverviewTab from './tabs/OverviewTab';
 // Importa los demás componentes de pestaña cuando sean necesarios
 import CarriersTab from './tabs/CarriersTab';
 import CustomersTab from './tabs/CustomersTab';
-// import FinancesTab from './tabs/FinancesTab';
-// import IncidentsTab from './tabs/IncidentsTab';
+import FinancesTab from './tabs/FinancesTab';
+import IncidentsTab from './tabs/IncidentsTab';
 
 export default function MainDashboard() {
   const { activeTab, data } = useAppSelector(state => state.dashboard);
@@ -33,29 +33,13 @@ export default function MainDashboard() {
       case 'overview':
         return <OverviewTab data={data} />;
       case 'carriers':
-        return <CarriersTab />;
+        return <CarriersTab data={data}/>;
       case 'customers':
-        return <CustomersTab />
+        return <CustomersTab data={data}/>;
       case 'finances':
-        // Placeholder, se implementará después
-        return (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h5" gutterBottom>Vista de Finanzas</Typography>
-            <Typography variant="body1" color="text.secondary">
-              Esta sección se implementará en la siguiente fase
-            </Typography>
-          </Box>
-        );
+       return <FinancesTab data={data}/>;
       case 'incidents':
-        // Placeholder, se implementará después
-        return (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h5" gutterBottom>Vista de Incidencias</Typography>
-            <Typography variant="body1" color="text.secondary">
-              Esta sección se implementará en la siguiente fase
-            </Typography>
-          </Box>
-        );
+        return <IncidentsTab data={data}/>;
       default:
         return null;
     }

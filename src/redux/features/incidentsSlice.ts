@@ -6,7 +6,7 @@ import { Incident } from './dashboardSlice'; // Reutilizamos el tipo Incident
 interface IncidentDetail {
   id: string;
   type: string;
-  status: 'pending' | 'in_progress' | 'resolved';
+  status: 'pending' | 'in_progress' | 'finalized';
   createdAt: string;
   resolvedAt?: string;
   shipmentId: string;
@@ -33,12 +33,24 @@ interface IncidentDetail {
   }[];
 }
 
+export interface IncidentData {
+  id: string;
+  customer: string;
+  type: string;
+  carrier: string;
+  shipmentNumber: string;
+  status: string;
+  date: string;
+  openDays: number;
+  color: string;
+}
+
 export interface IncidentsState {
   summary: Incident | null;
   incidentsList: {
     id: string;
     type: string;
-    status: 'pending' | 'in_progress' | 'resolved';
+    status: 'pending' | 'in_progress' | 'finalized';
     createdAt: string;
     customerId: number;
     customerName: string;
@@ -46,6 +58,7 @@ export interface IncidentsState {
     carrierName: string;
     priority: 'low' | 'medium' | 'high';
   }[];
+  incidents: IncidentData[],
   selectedIncident: string | null;
   incidentDetails: IncidentDetail | null;
   isLoading: boolean;
@@ -62,6 +75,7 @@ export interface IncidentsState {
 const initialState: IncidentsState = {
   summary: null,
   incidentsList: [],
+  incidents: [],
   selectedIncident: null,
   incidentDetails: null,
   isLoading: false,
@@ -76,12 +90,12 @@ const initialState: IncidentsState = {
 };
 
 // Thunk para cargar resumen de incidencias
-export const fetchIncidentsSummary = createAsyncThunk(
-  'incidents/fetchSummary',
-  async (timeRange: string, { rejectWithValue }) => {
+export const fetchIncidents = createAsyncThunk(
+  'incidents',
+  async (_, { rejectWithValue }) => {
     try {
       // Usar el servicio API centralizado
-      return await dashboardService.getIncidentsSummary(timeRange);
+      return await dashboardService.getIncidents();
     } catch (error: any) {
       return rejectWithValue(error.message || 'Error al cargar el resumen de incidencias');
     }
@@ -110,7 +124,7 @@ export const fetchIncidentsList = createAsyncThunk(
       const mockIncidents = Array.from({ length: 15 }, (_, i) => ({
         id: `INC-${i + 1000}`,
         type: ['Retraso', 'Daño', 'Pérdida', 'Dirección', 'Otros'][Math.floor(Math.random() * 5)],
-        status: ['pending', 'in_progress', 'resolved'][Math.floor(Math.random() * 3)] as 'pending' | 'in_progress' | 'resolved',
+        status: ['pending', 'in_progress', 'finalized'][Math.floor(Math.random() * 3)] as 'pending' | 'in_progress' | 'finalized',
         createdAt: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30).toISOString(),
         customerId: Math.floor(Math.random() * 10) + 1,
         customerName: ['APLIN', 'CHICOS OLÉ', 'DESIGUALEX', 'CLAROSHOP', 'EMISSARY'][Math.floor(Math.random() * 5)],
@@ -229,15 +243,15 @@ const incidentsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Manejar estados para fetchIncidentsSummary
-      .addCase(fetchIncidentsSummary.pending, (state) => {
+      .addCase(fetchIncidents.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchIncidentsSummary.fulfilled, (state, action) => {
+      .addCase(fetchIncidents.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.summary = action.payload;
+        state.incidents = action.payload;
       })
-      .addCase(fetchIncidentsSummary.rejected, (state, action) => {
+      .addCase(fetchIncidents.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })

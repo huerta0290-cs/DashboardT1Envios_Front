@@ -21,10 +21,12 @@ import {
 } from '@mui/icons-material';
 import CardComponent from '@/components/common/CardComponent';
 import DropdownFilter from '@/components/common/DropdownFilter';
-import { Incident, Carrier, TopCustomer } from '@/redux/features/dashboardSlice';
+import { Carrier, TopCustomer } from '@/redux/features/dashboardSlice';
+import { IncidentData } from '@/redux/features/incidentsSlice';
+
 
 interface IncidentsTableProps {
-  incidents: Incident;
+  incidents: IncidentData[];
   carriers: Carrier[];
   customers: TopCustomer[];
 }
@@ -37,60 +39,62 @@ export default function IncidentsTable({
   const [statusFilter, setStatusFilter] = useState('Todas');
   
   // Simular incidencias recientes
-  const generateMockIncidents = () => {
-    const types = incidents.byType;
-    const result = [];
+  // const generateMockIncidents = () => {
+  //   const types = incidents.byType;
+  //   const result = [];
     
-    for (let i = 0; i < 5; i++) {
-      const isResolved = i % 3 === 0;
-      const isPending = i % 3 === 1;
-      const randomType = types[i % types.length];
-      const randomCarrier = carriers[i % carriers.length];
-      const randomCustomer = customers[i % customers.length];
+  //   for (let i = 0; i < 5; i++) {
+  //     const isResolved = i % 3 === 0;
+  //     const isPending = i % 3 === 1;
+  //     const randomType = types[i % types.length];
+  //     const randomCarrier = carriers[i % carriers.length];
+  //     const randomCustomer = customers[i % customers.length];
       
-      result.push({
-        id: `INC-${Math.floor(1000000 + Math.random() * 9000000)}`,
-        customer: randomCustomer,
-        type: randomType,
-        carrier: randomCarrier,
-        shipmentNumber: Math.floor(1000000000 + Math.random() * 9000000000).toString(),
-        status: isResolved ? 'resolved' : isPending ? 'pending' : 'processing',
-        date: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)),
-        openDays: isResolved ? 0 : i + 1
-      });
-    }
+  //     result.push({
+  //       id: `INC-${Math.floor(1000000 + Math.random() * 9000000)}`,
+  //       customer: randomCustomer,
+  //       type: randomType,
+  //       carrier: randomCarrier,
+  //       shipmentNumber: Math.floor(1000000000 + Math.random() * 9000000000).toString(),
+  //       status: isResolved ? 'resolved' : isPending ? 'pending' : 'processing',
+  //       date: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)),
+  //       openDays: isResolved ? 0 : i + 1
+  //     });
+  //   }
     
-    return result;
-  };
+  //   return result;
+  // };
   
-  const mockIncidents = generateMockIncidents();
+  // const mockIncidents = generateMockIncidents();
   
-  // Filtrar por estado si es necesario
+  //Filtrar por estado si es necesario
   const filteredIncidents = statusFilter === 'Todas' 
-    ? mockIncidents 
-    : mockIncidents.filter(incident => {
-        if (statusFilter === 'Resueltas') return incident.status === 'resolved';
+    ? incidents 
+    : incidents.filter(incident => {
+        if (statusFilter === 'Resueltas') return incident.status === 'finalized';
         if (statusFilter === 'Pendientes') return incident.status === 'pending';
-        if (statusFilter === 'En Proceso') return incident.status === 'processing';
+        if (statusFilter === 'En Proceso') return incident.status === 'in_process';
         return true;
       });
+
+  // const filteredIncidents = incidents
   
   // Obtener color basado en el tipo de incidencia
-  const getTypeColor = (type: any) => {
+  const getTypeColor = (color: string) => {
     return {
-      bg: `${type.color}30`,
-      text: type.color
+      bg: `${color}30`,
+      text: color
     };
   };
   
   // Obtener color basado en el status
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'resolved':
+      case 'finalized':
         return { bg: 'success.light', text: 'success.main' };
       case 'pending':
         return { bg: 'error.light', text: 'error.main' };
-      case 'processing':
+      case 'in_process':
         return { bg: 'warning.light', text: 'warning.main' };
       default:
         return { bg: 'grey.100', text: 'text.primary' };
@@ -100,11 +104,11 @@ export default function IncidentsTable({
   // Obtener texto de status
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'resolved':
+      case 'finalized':
         return 'Resuelto';
       case 'pending':
         return 'Pendiente';
-      case 'processing':
+      case 'in_process':
         return 'En Proceso';
       default:
         return status;
@@ -134,12 +138,12 @@ export default function IncidentsTable({
               <TableCell align="center">Estado</TableCell>
               <TableCell align="center">Fecha</TableCell>
               <TableCell align="center">Tiempo Abierto</TableCell>
-              <TableCell align="center">Acciones</TableCell>
+              {/* <TableCell align="center">Acciones</TableCell> */}
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredIncidents.map((incident, index) => {
-              const typeColor = getTypeColor(incident.type);
+              const typeColor = getTypeColor(incident.color);
               const statusColor = getStatusColor(incident.status);
               
               return (
@@ -157,12 +161,12 @@ export default function IncidentsTable({
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight="medium">
-                      {incident.customer.name}
+                      {incident.customer}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Chip 
-                      label={incident.type.name}
+                      label={incident.type}
                       size="small"
                       sx={{ 
                         bgcolor: typeColor.bg,
@@ -178,16 +182,16 @@ export default function IncidentsTable({
                         sx={{ 
                           width: 24, 
                           height: 24, 
-                          bgcolor: incident.carrier.color,
+                          bgcolor: incident.color,
                           fontSize: '0.75rem',
                           mr: 1
                         }}
                         variant="rounded"
                       >
-                        {incident.carrier.name.charAt(0)}
+                        {incident.carrier.charAt(0)}
                       </Avatar>
                       <Typography variant="body2">
-                        {incident.carrier.name}
+                        {incident.carrier}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -210,7 +214,7 @@ export default function IncidentsTable({
                   </TableCell>
                   <TableCell align="center">
                     <Typography variant="body2" color="text.secondary">
-                      {incident.date.toLocaleDateString('es-MX')}
+                      {new Date(incident.date).toLocaleDateString('es-MX')}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
@@ -231,11 +235,11 @@ export default function IncidentsTable({
                       }
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">
+                  {/* <TableCell align="center">
                     <IconButton size="small">
                       <MoreVertIcon fontSize="small" />
                     </IconButton>
-                  </TableCell>
+                  </TableCell> */}
                 </TableRow>
               );
             })}

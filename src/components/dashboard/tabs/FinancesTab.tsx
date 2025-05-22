@@ -37,12 +37,12 @@ export default function FinancesTab({ data }: FinancesTabProps) {
       
       {/* Top clientes por ingresos y proyección */}
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-        <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+        <Box sx={{ width: { xs: '100%', md: '100%' } }}>
           <TopRevenueCustomers customers={data.topCustomers} />
         </Box>
-        <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+        {/* <Box sx={{ width: { xs: '100%', md: '50%' } }}>
           <RevenueForecast />
-        </Box>
+        </Box> */}
       </Stack>
     </Stack>
   );

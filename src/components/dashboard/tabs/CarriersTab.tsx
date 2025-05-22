@@ -3,115 +3,46 @@
 
 import { useEffect, useState } from 'react';
 import { Stack, Box, Typography, CircularProgress } from '@mui/material';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { fetchCarriers, fetchCarrierDetails } from '@/redux/features/carriersSlice';
+import { DashboardData } from '@/redux/features/dashboardSlice';
 import CarriersComparison from '../carriers/CarriersComparison';
 import CarriersDistribution from '../carriers/CarriersDistribution';
 import CarriersPerformance from '../carriers/CarriersPerformance';
 import DeliveryTime from '../carriers/DeliveryTime';
 import IncidentResolution from '../carriers/IncidentResolution';
 
-export default function CarriersTab() {
-  const dispatch = useAppDispatch();
-  const { 
-    carriers, 
-    selectedCarrier, 
-    isLoading, 
-    error, 
-    timeRange,
-    customDateRange 
-  } = useAppSelector(state => state.carriers);
-  
-  // También necesitamos obtener el mapeo de los transportistas en el state del dashboard
-  const { data: dashboardData } = useAppSelector(state => state.dashboard);
-  
+interface CarriersTabProps {
+  data: DashboardData;
+}
+
+export default function CarriersTab({ data }: CarriersTabProps) {  
   // Estado local para manejar el carrier seleccionado
   const [localSelectedCarrier, setLocalSelectedCarrier] = useState<string>('all');
-
-  useEffect(() => {
-    fetchData();
-  }, [dispatch, timeRange, customDateRange]);
-
-  // Función para cargar datos
-  const fetchData = () => {
-    // Preparar parámetros según si es rango personalizado o no
-    const params = {
-      timeRange,
-      ...(timeRange === 'custom' && customDateRange.startDate && customDateRange.endDate 
-        ? { 
-            startDate: customDateRange.startDate, 
-            endDate: customDateRange.endDate 
-          }
-        : {})
-    };
-
-    dispatch(fetchCarriers(params));
-  }
-
-  // Si el componente carga y aún no hay datos, mostramos un mensaje de carga
-  if (isLoading && carriers.length === 0) {
-    return (
-      <Stack 
-        direction="column" 
-        spacing={2} 
-        alignItems="center" 
-        justifyContent="center" 
-        sx={{ height: '300px' }}
-      >
-        <CircularProgress />
-        <Typography variant="body1" color="text.secondary">
-          Cargando datos de transportistas...
-        </Typography>
-      </Stack>
-    );
-  }
-
-  // Si hay un error, mostramos el mensaje
-  if (error) {
-    return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="h6" color="error" gutterBottom>
-          Error al cargar los datos
-        </Typography>
-        <Typography variant="body1">
-          {error}
-        </Typography>
-      </Box>
-    );
-  }
-
-  // Para simplificar este ejemplo, usamos los carriers del dashboard hasta que se carguen los carriers específicos
-  const carriersData = carriers.length > 0 ? carriers : (dashboardData?.carriers || []);
-  //const carriersData = carriers
 
   return (
     <Stack spacing={3}>
       {/* Tabla comparativa de transportistas */}
       <CarriersComparison 
-        carriers={carriersData} 
         selectedCarrier={localSelectedCarrier}
         setSelectedCarrier={setLocalSelectedCarrier}
       />
       
-      {/* Gráficos de rendimiento */}
+     {/* Gráficos de rendimiento */}
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-          <CarriersDistribution carriers={carriersData} />
+          <CarriersDistribution carriers={data.carriers} />
         </Box>
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-          <CarriersPerformance carriers={carriersData} />
+          <CarriersPerformance carriers={data.carriers} />
         </Box>
       </Stack>
       
       {/* Gráficos de tiempo de entrega y resolución de incidencias */}
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-          <DeliveryTime carriers={carriersData} />
+          <DeliveryTime carriers={data.carriers} />
         </Box>
         <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-          <IncidentResolution 
-            incidentData={dashboardData?.incidents.resolutionTime || {}} 
-          />
+          <IncidentResolution incidentData={data.incidents.resolutionTime} />
         </Box>
       </Stack>
     </Stack>

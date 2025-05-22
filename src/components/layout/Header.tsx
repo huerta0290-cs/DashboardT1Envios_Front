@@ -21,112 +21,85 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  Stack
+  DialogContentText,
+  Stack,
+  Chip
 } from '@mui/material';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale/es';
 import { 
   Notifications as NotificationsIcon, 
   Settings as SettingsIcon, 
   KeyboardArrowDown as KeyboardArrowDownIcon,
-  CalendarMonth as CalendarMonthIcon
+  CalendarMonth as CalendarMonthIcon,
+  ExitToApp as ExitToAppIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
-
-import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { 
-  setTimeRange, 
-  setComparisonEnabled, 
-  setCustomDateRange 
-} from '@/redux/features/dashboardSlice';
-import {
-  setCarrierTimeRange,
-  setCarrierCustomDateRange
-} from '@/redux/features/carriersSlice';
-import {
-  setCustomerTimeRange,
-  setCustomerCustomDateRange
-} from '@/redux/features/customersSlice';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setTimeRange, setComparisonEnabled } from '@/redux/features/dashboardSlice';
+import { removeAuthToken, getUserInfo } from '../../service/auth';
 
 export default function Header() {
   const dispatch = useAppDispatch();
-  const { timeRange, comparisonEnabled, customDateRange } = useAppSelector(state => state.dashboard);
+  const { timeRange, comparisonEnabled } = useAppSelector(state => state.dashboard);
   
-  // Estado para menú de usuario
+  // Estados locales
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const open = Boolean(anchorEl);
   
-  // Estado para diálogo de fecha personalizada
-  const [dateDialogOpen, setDateDialogOpen] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(
-    customDateRange.startDate ? new Date(customDateRange.startDate) : null
-  );
-  const [endDate, setEndDate] = useState<Date | null>(
-    customDateRange.endDate ? new Date(customDateRange.endDate) : null
-  );
-  
-  // Manejadores de eventos
+  // Obtener información del usuario
+  const userInfo = getUserInfo() || {
+    name: 'Usuario',
+    email: 'usuario@t1envios.com',
+    role: 'Usuario'
+  };
+
   const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
   
-  const handleUserMenuClose = () => {
+  const handleClose = () => {
     setAnchorEl(null);
   };
 
   const handleTimeRangeChange = (newRange: '1d' | '7d' | '30d' | 'custom') => {
-    if (newRange === 'custom') {
-      setDateDialogOpen(true);
-    } else {
-      dispatch(setTimeRange(newRange));
-      dispatch(setCarrierTimeRange(newRange))
-      dispatch(setCustomerTimeRange(newRange))
-    }
+    dispatch(setTimeRange(newRange));
   };
 
   const handleComparisonToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setComparisonEnabled(event.target.checked));
   };
 
-  const handleDateDialogClose = () => {
-    setDateDialogOpen(false);
+  const handleLogoutClick = () => {
+    setAnchorEl(null);
+    setShowLogoutDialog(true);
   };
 
-  const handleDateDialogConfirm = () => {
-    if (startDate && endDate) {
-      // Formatear las fechas en formato ISO
-      const formattedStartDate = format(startDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
-      const formattedEndDate = format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
-      
-      // Actualizar el state de Redux
-      dispatch(setCustomDateRange({
-        startDate: formattedStartDate,
-        endDate: formattedEndDate
-      }));
-      dispatch(setCarrierCustomDateRange({
-        startDate: formattedStartDate,
-        endDate: formattedEndDate
-      }));
-      dispatch(setCustomerCustomDateRange({
-        startDate: formattedStartDate,
-        endDate: formattedEndDate
-      }));
-      
-      // Establecer el rango de tiempo como personalizado
-      dispatch(setTimeRange('custom'));
-      dispatch(setCarrierTimeRange('custom'))
-      dispatch(setCustomerTimeRange('custom'))
-    }
-    setDateDialogOpen(false);
+  const handleLogoutConfirm = () => {
+    // Limpiar token y storage
+    removeAuthToken();
+    setShowLogoutDialog(false);
+    
+    // Forzar recarga completa de la página para limpiar todo el estado
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutDialog(false);
+  };
+
+  // Obtener las primeras letras del nombre para el avatar
+  const getAvatarLetters = (name: string) => {
+    return name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2);
   };
 
   return (
     <>
-      <AppBar position="sticky" elevation={0} color="default" component="header">
+      <AppBar position="sticky" elevation={0}>
         <Toolbar sx={{ px: 3 }}>
-          <Box display="flex" alignItems="center">
+          {/* Logo y Título */}
+          <Stack direction="row" alignItems="center">
             <Typography variant="h6" color="primary" fontWeight="bold" sx={{ mr: 0.5 }}>
               T1
             </Typography>
@@ -137,11 +110,12 @@ export default function Header() {
             <Typography variant="body1" color="text.secondary">
               Dashboard Ejecutivo
             </Typography>
-          </Box>
+          </Stack>
           
           <Box sx={{ flexGrow: 1 }} />
           
-          <Stack direction="row" spacing={3} alignItems="center">
+          {/* Controles del Dashboard */}
+          <Stack direction="row" alignItems="center" spacing={3}>
             {/* Selector de rango de tiempo */}
             <ButtonGroup 
               variant="outlined" 
@@ -221,7 +195,7 @@ export default function Header() {
             />
 
             {/* Iconos de acciones */}
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" alignItems="center" spacing={1}>
               <Tooltip title="Notificaciones">
                 <IconButton size="small" color="inherit">
                   <NotificationsIcon />
@@ -254,80 +228,94 @@ export default function Header() {
                     fontSize: 14 
                   }}
                 >
-                  A
+                  {getAvatarLetters(userInfo.name)}
                 </Avatar>
-                <Typography variant="body2" fontWeight="medium" sx={{ ml: 1 }}>
-                  Admin
-                </Typography>
+                <Stack direction="column" sx={{ ml: 1, alignItems: 'flex-start' }}>
+                  <Typography variant="body2" fontWeight="medium" sx={{ lineHeight: 1 }}>
+                    {userInfo.name}
+                  </Typography>
+                  <Chip 
+                    label={userInfo.role} 
+                    size="small" 
+                    sx={{ 
+                      height: 16, 
+                      fontSize: '0.65rem',
+                      bgcolor: 'primary.light',
+                      color: 'primary.main'
+                    }} 
+                  />
+                </Stack>
                 <KeyboardArrowDownIcon fontSize="small" sx={{ ml: 0.5 }} />
               </Box>
             </Stack>
           </Stack>
         </Toolbar>
       </AppBar>
-      
-      {/* Menú de usuario */}
+
+      {/* Menú desplegable del usuario */}
       <Menu
         anchorEl={anchorEl}
         open={open}
-        onClose={handleUserMenuClose}
+        onClose={handleClose}
         MenuListProps={{
           'aria-labelledby': 'user-menu-button',
         }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        sx={{
+          '& .MuiPaper-root': {
+            minWidth: 200,
+            mt: 1
+          }
+        }}
       >
-        <MenuItem onClick={handleUserMenuClose}>Mi Perfil</MenuItem>
-        <MenuItem onClick={handleUserMenuClose}>Configuración</MenuItem>
-        <MenuItem onClick={handleUserMenuClose}>Cerrar Sesión</MenuItem>
+        {/* Información del usuario */}
+        <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="body2" fontWeight="medium">
+            {userInfo.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {userInfo.email}
+          </Typography>
+        </Box>
+        
+        <MenuItem onClick={handleClose}>
+          <PersonIcon sx={{ mr: 1, fontSize: 18 }} />
+          Mi Perfil
+        </MenuItem>
+        <MenuItem onClick={handleClose}>
+          <SettingsIcon sx={{ mr: 1, fontSize: 18 }} />
+          Configuración
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleLogoutClick} sx={{ color: 'error.main' }}>
+          <ExitToAppIcon sx={{ mr: 1, fontSize: 18 }} />
+          Cerrar Sesión
+        </MenuItem>
       </Menu>
-      
-      {/* Diálogo para selección de fecha personalizada */}
-      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
-        <Dialog 
-          open={dateDialogOpen} 
-          onClose={handleDateDialogClose}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle>Selecciona el rango de fechas</DialogTitle>
-          <DialogContent>
-            <Stack spacing={3} sx={{ mt: 2 }}>
-              <DatePicker
-                label="Fecha de inicio"
-                value={startDate}
-                onChange={(newValue) => setStartDate(newValue)}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: 'outlined'
-                  }
-                }}
-              />
-              <DatePicker
-                label="Fecha de fin"
-                value={endDate}
-                onChange={(newValue) => setEndDate(newValue)}
-                minDate={startDate || undefined}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: 'outlined'
-                  }
-                }}
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDateDialogClose}>Cancelar</Button>
-            <Button 
-              onClick={handleDateDialogConfirm} 
-              variant="contained" 
-              disabled={!startDate || !endDate}
-            >
-              Aplicar
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </LocalizationProvider>
+
+      {/* Diálogo de confirmación de logout */}
+      <Dialog
+        open={showLogoutDialog}
+        onClose={handleLogoutCancel}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Confirmar Cierre de Sesión</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Está seguro de que desea cerrar sesión? Tendrá que volver a autenticarse para acceder al dashboard.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleLogoutCancel} color="inherit">
+            Cancelar
+          </Button>
+          <Button onClick={handleLogoutConfirm} color="error" variant="contained">
+            Cerrar Sesión
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

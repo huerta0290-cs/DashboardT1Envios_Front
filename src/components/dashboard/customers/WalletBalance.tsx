@@ -65,9 +65,9 @@ export default function WalletBalance({ walletData }: WalletBalanceProps) {
             </Typography>
           </Box>
           
-          <Divider orientation="vertical" flexItem />
+          {/* <Divider orientation="vertical" flexItem /> */}
           
-          <Box>
+          {/* <Box>
             <Typography variant="h6" fontWeight="semibold" color="text.primary" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {walletData.lowBalanceAlerts.length}
               {walletData.lowBalanceAlerts.length > 0 && (
@@ -77,7 +77,7 @@ export default function WalletBalance({ walletData }: WalletBalanceProps) {
             <Typography variant="body2" color="text.secondary">
               Alertas de saldo bajo
             </Typography>
-          </Box>
+          </Box> */}
         </Stack>
       </Stack>
     </CardComponent>

@@ -60,7 +60,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
         />
       </Box>
       
-      <Box sx={{ flex: 1 }}>
+      {/* <Box sx={{ flex: 1 }}>
         <KPICard 
           title="NPS / Satisfacción"
           value={kpis.npsScore.toFixed(1)}
@@ -71,7 +71,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
           iconBgColor="#F59E0B"
           progress={80}
         />
-      </Box>
+      </Box> */}
     </Stack>
   );
 }

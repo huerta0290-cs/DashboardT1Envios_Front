@@ -49,18 +49,31 @@ export interface TopCustomer {
   trend: number[];
 }
 
+export interface IncidentOrigin {
+  total: number;
+  types: IncidentType[];
+}
+
+export interface IncidentType {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export interface Incident {
   total: number;
   resolved: number;
-  byType: {
-    name: string;
-    value: number;
-    color: string;
-  }[];
+  byType: IncidentType[];
+  byOrigin: {
+    automatic: IncidentOrigin;
+    manual: IncidentOrigin;
+  };
   resolutionTime: Record<string, number>;
   trend: {
     day: string;
-    count: number;
+    automatic: number;
+    manual: number;
+    total: number;
   }[];
 }
 
@@ -82,6 +95,19 @@ export interface QualityMetrics {
   customerRetention: number;
 }
 
+// Datos geográficos para un solo estado
+export interface MapData {
+  state: string;
+  volume: number;
+  incidents: number;
+}
+
+// Datos geográficos completos separados por origen y destino
+export interface GeographicData {
+  destination: MapData[];
+  origin: MapData[];
+}
+
 export interface MapData {
   state: string;
   volume: number;
@@ -96,7 +122,7 @@ export interface DashboardData {
   incidents: Incident;
   walletData: WalletData;
   qualityMetrics: QualityMetrics;
-  mapData: MapData[];
+  mapData: GeographicData;
 }
 
 export interface DashboardState {
@@ -108,6 +134,7 @@ export interface DashboardState {
   comparisonEnabled: boolean;
   selectedCarrier: string;
   mapView: 'volume' | 'incidents';
+  mapViewType: 'origin' | 'destination'; // Nuevo campo para controlar origen/destino
   customDateRange: {
     startDate: string | null;
     endDate: string | null;
@@ -123,6 +150,7 @@ const initialState: DashboardState = {
   comparisonEnabled: false,
   selectedCarrier: 'all',
   mapView: 'volume',
+  mapViewType: 'destination', // Por defecto mostrar destino
   customDateRange: {
     startDate: null,
     endDate: null
@@ -178,6 +206,9 @@ const dashboardSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+     setMapViewType: (state, action: PayloadAction<'origin' | 'destination'>) => {
+      state.mapViewType = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -204,7 +235,8 @@ export const {
   setSelectedCarrier,
   setMapView,
   setCustomDateRange,
-  clearError
+  clearError,
+  setMapViewType, // Añade esta exportación
 } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

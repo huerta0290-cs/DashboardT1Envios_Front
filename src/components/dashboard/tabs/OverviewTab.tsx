@@ -19,7 +19,7 @@ interface OverviewTabProps {
 
 export default function OverviewTab({ data }: OverviewTabProps) {
   const { timeRange, mapView } = useAppSelector(state => state.dashboard);
-
+  console.log("OverviewTab", data);
   return (
     <Stack spacing={3}>
       {/* KPIs principales */}
@@ -39,15 +39,15 @@ export default function OverviewTab({ data }: OverviewTabProps) {
       
       {/* Gráficos secundarios - segunda fila */}
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-        <Box sx={{ width: { xs: '100%', md: '33.33%' } }}>
+        <Box sx={{ width: { xs: '100%', md: '100%' } }}>
           <TopCustomers customers={data.topCustomers} />
         </Box>
-        <Box sx={{ width: { xs: '100%', md: '33.33%' } }}>
+        {/* <Box sx={{ width: { xs: '100%', md: '33.33%' } }}>
           <BalanceAlerts walletData={data.walletData} />
-        </Box>
-        <Box sx={{ width: { xs: '100%', md: '33.33%' } }}>
+        </Box> */}
+        {/* <Box sx={{ width: { xs: '100%', md: '33.33%' } }}>
           <QualityMetrics metrics={data.qualityMetrics} />
-        </Box>
+        </Box> */}
       </Stack>
       
       {/* Gráficos inferiores - tercera fila */}

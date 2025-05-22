@@ -17,7 +17,9 @@ import { formatNumber } from '@/utils/formatters';
 interface IncidentsTrendProps {
   incidentTrend: {
     day: string;
-    count: number;
+    total: number;
+    automatic: number;
+    manual: number;
   }[];
 }
 
@@ -64,7 +66,7 @@ export default function IncidentsTrend({ incidentTrend }: IncidentsTrendProps) {
             height={36}
             iconType="circle"
           />
-          <Bar dataKey="count" name="Incidencias" fill="#FF8042" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="total" name="Incidencias" fill="#FF8042" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </CardComponent>

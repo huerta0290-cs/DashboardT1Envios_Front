@@ -1,14 +1,13 @@
 // src/components/dashboard/overview/CarrierDistribution.tsx
 'use client';
-
 import { Box } from '@mui/material';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
 } from 'recharts';
 import CardComponent from '@/components/common/CardComponent';
 import { Carrier } from '@/redux/features/dashboardSlice';
@@ -18,59 +17,63 @@ interface CarrierDistributionProps {
   carriers: Carrier[];
 }
 
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ 
-  cx, 
-  cy, 
-  midAngle, 
-  innerRadius, 
-  outerRadius, 
-  percent, 
-  name 
-}: any) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.65;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <text 
-      x={x} 
-      y={y} 
-      fill="white" 
-      textAnchor={x > cx ? 'start' : 'end'} 
-      dominantBaseline="central"
-      style={{ fontSize: '12px', fontWeight: 500 }}
-    >
-      {`${name} ${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
+// Definimos colores específicos para los transportistas
+const COLORS: Record<string, string> = {
+  'DHL': '#FFD166', // amarillo
+  'FEDEX': '#4B3F72', // púrpura
+  'UPS': '#3A2E39', // marrón oscuro
+  'JT EXPRESS': '#7F70BE', // morado claro
+  'JTEXPRESS': '#7F70BE', // variante sin espacio
+  'EXPRESS': '#5DADE2', // azul claro
+  'ESTAFETA': '#A569BD', // púrpura claro
+  '99MIN': '#8E44AD', // púrpura oscuro
 };
 
 export default function CarrierDistribution({ carriers }: CarrierDistributionProps) {
+  // Función para determinar el color basado en el nombre del transportista
+  const getCarrierColor = (name: string) => {
+    const upperName = name.toUpperCase();
+    return COLORS[upperName] || '#8884d8'; // Color por defecto si no se encuentra
+  };
+
+  // Calculamos los porcentajes para cada transportista
+  const total = carriers.reduce((sum, c) => sum + c.guides, 0);
+  const dataWithPercentage = carriers.map(carrier => ({
+    ...carrier,
+    percentage: Math.round((carrier.guides / total) * 100)
+  }));
+  
+  // Ordenamos por cantidad de guías (de mayor a menor)
+  dataWithPercentage.sort((a, b) => b.guides - a.guides);
+
   return (
     <CardComponent title="Distribución por Transportista" height={380}>
-      <Box sx={{ width: '100%', height: '100%' }}>
+      <Box sx={{ width: '100%', height: 320, position: 'relative' }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={carriers}
+              data={dataWithPercentage}
               cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={renderCustomizedLabel}
-              innerRadius={60}
-              outerRadius={120}
+              cy="45%"
+              innerRadius={70}
+              outerRadius={110}
               fill="#8884d8"
               paddingAngle={1}
               dataKey="guides"
               nameKey="name"
             >
-              {carriers.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+              {dataWithPercentage.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={getCarrierColor(entry.name)}
+                />
               ))}
             </Pie>
-            <Tooltip 
-              formatter={(value: number) => formatNumber(value)}
+            <Tooltip
+              formatter={(value: number, name: string) => [
+                formatNumber(value), 
+                name
+              ]}
               contentStyle={{
                 backgroundColor: '#fff',
                 border: '1px solid #f0f0f0',
@@ -78,13 +81,36 @@ export default function CarrierDistribution({ carriers }: CarrierDistributionPro
                 boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               }}
             />
-            <Legend 
-              layout="horizontal" 
-              verticalAlign="bottom" 
+            <Legend
+              layout="horizontal"
+              verticalAlign="bottom"
               align="center"
-              formatter={(value, entry, index) => (
-                <span style={{ color: '#1F2937', fontSize: '0.875rem' }}>{value}</span>
-              )}
+              iconType="circle"
+              formatter={(value, entry) => {
+                // Encontrar el elemento correspondiente para obtener el porcentaje
+                const item = dataWithPercentage.find(c => c.name === value);
+                const percentage = item ? item.percentage : 0;
+                
+                return (
+                  <span style={{ 
+                    color: entry.color,
+                    fontSize: '0.75rem',
+                    margin: '0 4px',
+                    display: 'inline-block'
+                  }}>
+                    {value} {percentage}%
+                  </span>
+                );
+              }}
+              wrapperStyle={{
+                paddingTop: 20,
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: '0 16px',
+                lineHeight: '24px'
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
